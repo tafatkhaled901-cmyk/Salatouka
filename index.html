@@ -175,6 +175,21 @@
     .adhan-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s ease-in-out infinite;}
     @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
+    /* Bannière activation audio */
+    .audio-warn{
+      width:calc(100% - 48px);max-width:432px;
+      background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(251,191,36,.04));
+      border:1px solid rgba(251,191,36,.35);
+      border-radius:14px;padding:12px 16px;margin-bottom:12px;
+      display:flex;align-items:center;gap:12px;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;
+      animation:pulseWarn 2s ease-in-out infinite;
+    }
+    .audio-warn.hidden{display:none;}
+    @keyframes pulseWarn{0%,100%{border-color:rgba(251,191,36,.35);}50%{border-color:rgba(251,191,36,.7);}}
+    .aw-title{font-size:13px;font-weight:600;color:#fbbf24;}
+    .aw-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+
     .section-header{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:10px;margin-bottom:10px;}
     .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .section-line{flex:1;height:1px;background:var(--border);}
@@ -275,7 +290,6 @@
       <div class="chip" data-adhan="egypt"><span class="chip-icon">🎵</span>Égypte</div>
       <!-- ✅ FIX 9 : Adhan Fajr spécial -->
       <div class="chip" data-adhan="fajr"><span class="chip-icon">⭐</span>Fajr<br><small>Spécial</small></div>
-      <div class="chip" data-adhan="off"><span class="chip-icon">🔕</span>Silence</div>
     </div>
 
     <button class="modal-btn" id="goBtn" disabled>Afficher les horaires →</button>
@@ -312,6 +326,16 @@
 <div class="adhan-status hidden" id="adhanStatus">
   <div class="adhan-dot"></div>
   <span id="adhanStatusText">Adhan activé</span>
+</div>
+
+<!-- Bannière activation audio -->
+<div class="audio-warn" id="audioWarn" onclick="testUnlock()">
+  <span style="font-size:22px">🔊</span>
+  <div style="flex:1;text-align:left">
+    <div class="aw-title">Activer le son de l'Adhan</div>
+    <div class="aw-sub">Appuyez ici une fois pour autoriser l'audio</div>
+  </div>
+  <span style="color:var(--gold);font-size:18px">▶</span>
 </div>
 
 <!-- ══ MÉTÉO ══ -->
@@ -443,7 +467,6 @@ const ADHAN_URLS = {
   madinah: 'https://cdn.aladhan.com/audio/adhans/a1.mp3',   // Ahmad al-Nafees (style Madinah)
   egypt:   'https://cdn.aladhan.com/audio/adhans/a2.mp3',   // Hafiz Mustafa Özcan
   fajr:    'https://cdn.aladhan.com/audio/adhans/a9.mp3',   // Mishary Alafasy — avec "الصلاة خير من النوم"
-  off:     null,
 };
 
 const WMO_ICONS = {0:'☀️',1:'🌤',2:'⛅',3:'🌥',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌨',71:'❄️',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
@@ -483,6 +506,7 @@ function loadState() {
     if (city) currentCity = JSON.parse(city);
     selectedMethod = localStorage.getItem('salatuk_method') || 'MWL';
     selectedAdhan  = localStorage.getItem('salatuk_adhan')  || 'makkah';
+    if (selectedAdhan === 'off') selectedAdhan = 'makkah';
   } catch(e) {}
 }
 
@@ -587,16 +611,12 @@ async function loadPrayerTimes() {
 
     // Location bar
     document.getElementById('locCity').textContent = `${currentCity.name}, ${currentCity.country}`;
-    document.getElementById('locMeta').textContent = `Méthode: ${selectedMethod} · Adhan: ${selectedAdhan === 'off' ? 'désactivé' : selectedAdhan}`;
+    document.getElementById('locMeta').textContent = `Méthode: ${selectedMethod} · Adhan: ${selectedAdhan}`;
 
     // Adhan status
     const st = document.getElementById('adhanStatus');
-    if (selectedAdhan !== 'off') {
-      st.classList.remove('hidden');
-      document.getElementById('adhanStatusText').textContent = `Adhan ${selectedAdhan} actif · prières surveillées`;
-    } else {
-      st.classList.add('hidden');
-    }
+    st.classList.remove('hidden');
+    document.getElementById('adhanStatusText').textContent = `Adhan ${selectedAdhan} actif · prières surveillées`;
 
     // ✅ FIX 8 : Calculer direction Qibla
     calcQibla(currentCity.lat, currentCity.lon);
@@ -611,6 +631,8 @@ async function loadPrayerTimes() {
 
     // Adhan watchdog
     adhanFired = {};
+    requestNotifPermission();
+    unlockAudio();
     startAdhanWatch();
 
     closeModal();
@@ -889,14 +911,50 @@ function todayKey() { return new Date().toISOString().slice(0, 10); }
 
 function startAdhanWatch() {
   if (adhanCheckInt) clearInterval(adhanCheckInt);
-  // ✅ FIX 3 : Vérification toutes les 5 secondes (plus réactif)
-  adhanCheckInt = setInterval(checkAdhan, 5000);
+  adhanCheckInt = setInterval(checkAdhan, 3000);
   checkAdhan();
+}
+
+// ══ FIX VEILLE : quand l'écran se rallume, rattraper une prière manquée ══
+let lastCheckTime = Date.now();
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    const gap = Date.now() - lastCheckTime;
+    // Si l'app a été en veille plus de 1 min, vérifier les prières manquées
+    if (gap > 60000) checkMissedPrayer(gap);
+    lastCheckTime = Date.now();
+    checkAdhan();
+    startAdhanWatch();
+  }
+});
+
+window.addEventListener('focus', () => { checkAdhan(); });
+window.addEventListener('online', () => { checkAdhan(); });
+
+// Rattraper une prière dont l'heure est passée pendant la veille
+function checkMissedPrayer(gapMs) {
+  if (!Object.keys(currentTimes).length) return;
+  const now    = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const gapMin = Math.ceil(gapMs / 60000);
+  const key    = todayKey();
+
+  PRAYER_META.filter(p => !p.isSunrise).forEach(p => {
+    const fireKey = `${p.key}-${key}`;
+    if (adhanFired[fireKey]) return;
+    const pMin = timeToMin(currentTimes[p.key]);
+    // La prière est passée pendant la veille (dans les 15 dernières minutes)
+    if (pMin <= nowMin && pMin >= nowMin - Math.min(gapMin, 15)) {
+      adhanFired[fireKey] = true;
+      const adhanToPlay = (p.isFajr && selectedAdhan === 'fajr') ? 'fajr' : selectedAdhan;
+      triggerAdhan(p, currentTimes[p.key], adhanToPlay);
+    }
+  });
 }
 
 function checkAdhan() {
   if (!Object.keys(currentTimes).length) return;
-  if (selectedAdhan === 'off') return;
   const now = new Date();
   const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
   const key = todayKey();
@@ -907,7 +965,7 @@ function checkAdhan() {
     const pTime = currentTimes[p.key];
     if (!pTime) return;
     const [ph, pm] = pTime.replace(/\s*(AM|PM).*/i, '').trim().split(':').map(Number);
-    if (h === ph && m === pm && s < 30) {
+    if (h === ph && m === pm && s < 55) {
       adhanFired[fireKey] = true;
       // ✅ FIX 9 : Fajr utilise l'adhan spécial si sélectionné 'fajr', sinon adhan normal
       const adhanToPlay = (p.isFajr && selectedAdhan === 'fajr') ? 'fajr' : selectedAdhan;
@@ -926,25 +984,120 @@ function triggerAdhan(prayer, time, adhanType) {
   playAdhan(adhanType);
 }
 
+// ══ SYSTÈME DE DÉVERROUILLAGE AUDIO ══
+// Les navigateurs mobiles bloquent l'audio tant que l'utilisateur
+// n'a pas interagi. On "débloque" l'audio au premier tap.
+let audioUnlocked = false;
+let preloadedAudio = {};
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  // Précharger TOUS les adhans et les débloquer
+  Object.keys(ADHAN_URLS).forEach(key => {
+    const url = ADHAN_URLS[key];
+    if (!url) return;
+    const a = new Audio(url);
+    a.preload = 'auto';
+    a.volume = 0;
+    // Jouer 0.01s en silence puis pause = déblocage
+    a.play().then(() => {
+      a.pause();
+      a.currentTime = 0;
+      a.volume = 1.0;
+      preloadedAudio[key] = a;
+    }).catch(() => {
+      preloadedAudio[key] = a;
+    });
+  });
+  audioUnlocked = true;
+  const st = document.getElementById('adhanStatusText');
+  if (st) st.textContent = `Adhan ${selectedAdhan} prêt ✓ · prières surveillées`;
+  const warn = document.getElementById('audioWarn');
+  if (warn) warn.classList.add('hidden');
+}
+
+// Déclencher le déblocage au tout premier contact
+['touchstart','touchend','click','keydown'].forEach(evt => {
+  document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+});
+
 function playAdhan(adhanType) {
   const type = adhanType || selectedAdhan;
   const url  = ADHAN_URLS[type];
   if (!url) return;
-  if (adhanAudio) { adhanAudio.pause(); adhanAudio = null; }
-  adhanAudio = new Audio(url);
-  adhanAudio.volume = 1.0;
 
   const playBtn = document.getElementById('adhanPlayBtn');
-  playBtn.classList.remove('visible');
+  if (playBtn) playBtn.classList.remove('visible');
 
-  // ✅ FIX 1 : Essayer autoplay, afficher bouton si bloqué
-  adhanAudio.play().then(() => {
-    playBtn.classList.remove('visible');
+  // Arrêter l'audio en cours
+  if (adhanAudio) { try { adhanAudio.pause(); } catch(e){} adhanAudio = null; }
+
+  // Utiliser l'audio préchargé si dispo (bien plus fiable)
+  if (preloadedAudio[type]) {
+    adhanAudio = preloadedAudio[type];
+    adhanAudio.currentTime = 0;
+  } else {
+    adhanAudio = new Audio(url);
+  }
+  adhanAudio.volume = 1.0;
+  adhanAudio.loop = false;
+
+  const attempt = adhanAudio.play();
+  if (attempt && attempt.catch) {
+    attempt.catch(() => {
+      // Bloqué → afficher le bouton manuel
+      if (playBtn) {
+        playBtn.classList.add('visible');
+        playBtn._adhanType = type;
+      }
+      // Notification système en secours
+      sendPrayerNotification(type);
+    });
+  }
+}
+
+// ══ NOTIFICATION SYSTÈME (secours si audio bloqué) ══
+// Test manuel du déverrouillage audio
+function testUnlock() {
+  unlockAudio();
+  requestNotifPermission();
+  const url = ADHAN_URLS[selectedAdhan];
+  if (!url) return;
+  const a = new Audio(url);
+  a.volume = 1.0;
+  a.play().then(() => {
+    // Jouer 2 secondes puis arrêter = confirmation
+    setTimeout(() => { a.pause(); a.currentTime = 0; }, 2500);
+    document.getElementById('audioWarn').classList.add('hidden');
+    const st = document.getElementById('adhanStatusText');
+    if (st) st.textContent = `✓ Son activé · Adhan ${selectedAdhan} prêt`;
   }).catch(() => {
-    // Autoplay bloqué → afficher bouton
-    playBtn.classList.add('visible');
-    playBtn._adhanType = type;
+    alert("Le navigateur bloque le son.\n\nVérifiez :\n• Le mode silencieux du téléphone\n• Le volume média\n• Autorisez le son pour ce site dans les paramètres du navigateur");
   });
+}
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendPrayerNotification(type) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  const name = document.getElementById('adhanPrayerName')?.textContent || 'الصلاة';
+  const ar   = document.getElementById('adhanPrayerAr')?.textContent   || '';
+  try {
+    new Notification('🕌 وقت الصلاة · ' + name, {
+      body: ar + ' — Appuyez pour écouter l\'Adhan',
+      icon: './icon-192.png',
+      badge: './icon-96.png',
+      tag: 'salatuk-prayer',
+      requireInteraction: true,
+      vibrate: [600,200,600,200,600]
+    });
+  } catch(e) {}
 }
 
 function forcePlayAdhan() {
