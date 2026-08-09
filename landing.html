@@ -137,6 +137,70 @@ body{
 }
 .btn-cta-icon{font-size:22px;}
 
+
+/* ══ BOUTON TÉLÉCHARGEMENT APK ══ */
+.btn-download{
+  display:flex;align-items:center;gap:14px;
+  width:100%;max-width:360px;
+  margin-top:16px;
+  background:linear-gradient(135deg,#1a7f3c,#22c55e);
+  border:none;border-radius:18px;
+  padding:16px 22px;
+  text-decoration:none;
+  box-shadow:0 10px 40px rgba(34,197,94,0.35);
+  transition:all .25s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-download:hover,.btn-download:active{
+  transform:translateY(-2px);
+  box-shadow:0 14px 50px rgba(34,197,94,0.45);
+  filter:brightness(1.08);
+}
+.bd-icon{
+  font-size:30px;width:52px;height:52px;flex-shrink:0;
+  background:rgba(255,255,255,0.18);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+}
+.bd-text{flex:1;text-align:left;}
+.bd-label{font-size:10px;color:rgba(255,255,255,0.85);letter-spacing:2px;text-transform:uppercase;}
+.bd-title{font-size:17px;font-weight:700;color:#fff;margin-top:3px;}
+.bd-arrow{font-size:22px;color:#fff;opacity:.9;}
+
+.dl-note{
+  max-width:360px;width:100%;
+  margin-top:12px;
+  background:rgba(34,197,94,0.07);
+  border:1px solid rgba(34,197,94,0.2);
+  border-radius:12px;padding:12px 16px;
+  font-size:12px;color:#86efac;line-height:1.6;
+  text-align:center;
+}
+.dl-small{font-size:11px;color:var(--muted);}
+
+.ios-box{
+  max-width:360px;width:100%;
+  margin-top:12px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;padding:14px 18px;
+  text-align:left;
+}
+.ios-box-head{
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;font-weight:600;color:var(--text);
+  padding-bottom:10px;margin-bottom:10px;
+  border-bottom:1px solid var(--border);
+}
+.ios-box-steps{display:flex;flex-direction:column;gap:8px;}
+.iob-step{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px;line-height:1.5;}
+.iob-step strong{color:var(--text);}
+.iob-n{
+  width:19px;height:19px;border-radius:50%;flex-shrink:0;
+  background:rgba(201,168,76,0.12);border:1px solid var(--gold);
+  color:var(--gold);font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
 /* ══ GUIDE INSTALLATION ══ */
 .install-guide{
   width:100%;max-width:380px;
@@ -540,71 +604,33 @@ footer{
     Ouvrir l'application
   </a>
 
-  <!-- Guide installation toujours visible -->
-  <div class="install-guide fade-in" id="installGuide">
-
-    <!-- ANDROID -->
-    <div class="ig-card" id="igAndroid">
-      <div class="ig-header">
-        <span class="ig-os-icon">🤖</span>
-        <div>
-          <div class="ig-os">Android</div>
-          <div class="ig-os-sub">Samsung · Xiaomi · Huawei · Oppo…</div>
-        </div>
-      </div>
-      <div class="ig-steps">
-        <div class="ig-step">
-          <div class="ig-num">1</div>
-          <div class="ig-text">Appuie sur <strong>🕌 Ouvrir l'application</strong> ci-dessus</div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">2</div>
-          <div class="ig-text">Appuie sur les <strong>3 points ⋮</strong> en haut à droite de Chrome</div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">3</div>
-          <div class="ig-text">Appuie sur <strong>"Ajouter à l'écran d'accueil"</strong></div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">4</div>
-          <div class="ig-text">Appuie sur <strong style="color:var(--gold)">Ajouter</strong> → L'icône 🕌 apparaît !</div>
-        </div>
-      </div>
+  <!-- ══ BOUTON TÉLÉCHARGEMENT APK ══ -->
+  <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/Salatuk1.apk"
+     download="Salatuk1.apk"
+     class="btn-download fade-in">
+    <div class="bd-icon">📲</div>
+    <div class="bd-text">
+      <div class="bd-label">Application Android · APK</div>
+      <div class="bd-title">Télécharger l'application</div>
     </div>
+    <div class="bd-arrow">⬇</div>
+  </a>
 
-    <div class="ig-separator">ou</div>
+  <div class="dl-note fade-in">
+    🤖 <strong>Android</strong> — Appuie sur le bouton, puis <strong>Installer</strong><br>
+    <span class="dl-small">Si Android demande, autorise "Installer des applications inconnues"</span>
+  </div>
 
-    <!-- IPHONE -->
-    <div class="ig-card" id="igIphone">
-      <div class="ig-header">
-        <span class="ig-os-icon">🍎</span>
-        <div>
-          <div class="ig-os">iPhone</div>
-          <div class="ig-os-sub">Ouvrir avec Safari uniquement</div>
-        </div>
-      </div>
-      <div class="ig-steps">
-        <div class="ig-step">
-          <div class="ig-num">1</div>
-          <div class="ig-text">Appuie sur <strong>🕌 Ouvrir l'application</strong> ci-dessus</div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">2</div>
-          <div class="ig-text">Appuie sur l'icône <strong>Partager</strong> en bas de l'écran <strong style="color:var(--gold)">⎙</strong></div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">3</div>
-          <div class="ig-text">Fais défiler et appuie <strong>"Sur l'écran d'accueil"</strong></div>
-        </div>
-        <div class="ig-step">
-          <div class="ig-num">4</div>
-          <div class="ig-text">Appuie sur <strong style="color:var(--gold)">Ajouter</strong> → L'icône 🕌 apparaît !</div>
-        </div>
-      </div>
+  <!-- iPhone -->
+  <div class="ios-box fade-in">
+    <div class="ios-box-head">
+      <span style="font-size:22px">🍎</span>
+      <span>iPhone — installer via Safari</span>
     </div>
-
-    <div class="ig-result">
-      🕌 L'icône <strong style="color:var(--gold)">صلاتك</strong> apparaîtra sur ton écran d'accueil comme une vraie application
+    <div class="ios-box-steps">
+      <div class="iob-step"><span class="iob-n">1</span> Appuie sur <strong>🕌 Ouvrir l'application</strong></div>
+      <div class="iob-step"><span class="iob-n">2</span> Appuie sur <strong>⎙ Partager</strong> en bas</div>
+      <div class="iob-step"><span class="iob-n">3</span> Choisis <strong>"Sur l'écran d'accueil"</strong></div>
     </div>
   </div>
 
@@ -772,9 +798,20 @@ footer{
     <strong style="color:var(--gold)">بارك الله فيكم</strong>
   </p>
 
+  <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/Salatuk1.apk"
+     download="Salatuk1.apk"
+     class="btn-download fade-in" style="margin:0 auto 14px;">
+    <div class="bd-icon">📲</div>
+    <div class="bd-text">
+      <div class="bd-label">Application Android · APK</div>
+      <div class="bd-title">Télécharger l'application</div>
+    </div>
+    <div class="bd-arrow">⬇</div>
+  </a>
+
   <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/" target="_blank" class="btn-cta fade-in">
     <span class="btn-cta-icon">🕌</span>
-    Ouvrir l'application gratuitement
+    Ou ouvrir dans le navigateur
   </a>
 
   <!-- Bouton installer (CTA bas) -->
