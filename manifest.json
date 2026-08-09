@@ -1,4 +1,5 @@
 {
+  "id": "salatuk-meteo-app",
   "name": "Salatuk × Météo — صلاتك",
   "short_name": "Salatuk",
   "description": "Horaires de prière islamique, Adhan automatique, Qibla et météo pour toutes les villes du monde. لا تغفل عن صلاتك يا مسلم",
@@ -12,45 +13,64 @@
   "lang": "fr",
   "dir": "ltr",
   "categories": ["lifestyle", "utilities"],
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "prefer_related_applications": false,
+  "related_applications": [],
   "shortcuts": [
     {
       "name": "Horaires du jour",
       "short_name": "Prières",
+      "description": "Voir les horaires de prière",
+      "url": "/Salatouka/index.html",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Qibla",
+      "short_name": "Qibla",
+      "description": "Direction de La Mecque",
       "url": "/Salatouka/index.html",
       "icons": [{ "src": "icon-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],
   "screenshots": [
     {
-      "src": "og-image.png",
-      "sizes": "1200x630",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Salatuk Dashboard"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
+      "src": "screenshot-mobile.png",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Salatuk Mobile"
+      "label": "Salatuk sur mobile — horaires et Adhan"
+    },
+    {
+      "src": "screenshot-desktop.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Salatuk sur desktop — tableau de bord complet"
     }
   ],
   "icons": [
-    { "src": "icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "share_target": {
     "action": "/Salatouka/index.html",
     "method": "GET",
     "params": { "title": "title", "text": "text", "url": "url" }
   },
-  "protocol_handlers": []
+  "handle_links": "preferred",
+  "launch_handler": { "client_mode": "navigate-existing" }
 }
