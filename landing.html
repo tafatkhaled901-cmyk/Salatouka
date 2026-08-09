@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>صلاتك × Météo — Application islamique gratuite</title>
+<meta name="description" content="لا تغفل عن صلاتك يا مسلم — Adhan automatique, horaires de prière pour le monde entier, boussole Qibla. 100% gratuit."/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --night:#060c1a;
+  --deep:#0a0f1e;
+  --card:#0f1829;
+  --gold:#c9a84c;
+  --gold2:#e8c97a;
+  --gold3:rgba(201,168,76,0.12);
+  --sky:#4a9eff;
+  --text:#f0f4ff;
+  --muted:#8899bb;
+  --border:#1e2d45;
+}
+
+html{scroll-behavior:smooth;}
+body{
+  background:var(--night);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  overflow-x:hidden;
+}
+
+/* ══ ÉTOILES ══ */
+.stars{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(1px 1px at 20% 10%, rgba(255,255,255,0.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 50% 20%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 5%,  rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 65% 35%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 25%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 85%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 95% 90%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(2px 2px at 40% 15%, rgba(201,168,76,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 70% 55%, rgba(201,168,76,0.3) 0%, transparent 100%);
+}
+
+/* ══ HERO ══ */
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  padding:60px 24px 80px;
+  overflow:hidden;
+}
+
+/* Lune décorative */
+.moon{
+  position:absolute;top:-60px;right:-60px;
+  width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%, #1a2744, #060c1a);
+  border:1px solid rgba(201,168,76,0.2);
+  box-shadow:
+    inset -20px -20px 60px rgba(201,168,76,0.08),
+    0 0 80px rgba(201,168,76,0.06);
+  opacity:0.6;
+}
+.moon::after{
+  content:'';position:absolute;
+  top:30px;left:30px;
+  width:80px;height:80px;border-radius:50%;
+  background:rgba(201,168,76,0.04);
+}
+
+/* Croissant SVG au-dessus du titre */
+.crescent{
+  font-size:64px;
+  margin-bottom:20px;
+  animation:float 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 20px rgba(201,168,76,0.5));
+}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+
+.hero-eyebrow{
+  font-size:11px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;
+  opacity:0.8;
+}
+
+.hero-ar{
+  font-family:'Amiri',serif;
+  font-size:clamp(28px,6vw,52px);
+  color:var(--gold2);
+  line-height:1.3;
+  margin-bottom:10px;
+  text-shadow:0 0 40px rgba(201,168,76,0.3);
+}
+
+.hero-title{
+  font-size:clamp(22px,5vw,40px);
+  font-weight:300;
+  color:var(--text);
+  line-height:1.3;
+  margin-bottom:20px;
+  letter-spacing:-0.5px;
+}
+.hero-title strong{color:var(--gold2);font-weight:600;}
+
+.hero-sub{
+  font-size:16px;color:var(--muted);
+  max-width:440px;line-height:1.7;
+  margin-bottom:40px;
+}
+
+/* Bouton CTA principal */
+.btn-cta{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--gold);
+  color:#060c1a;
+  font-weight:700;font-size:16px;
+  padding:18px 36px;border-radius:50px;
+  text-decoration:none;
+  transition:all .25s;
+  box-shadow:0 8px 40px rgba(201,168,76,0.35);
+  letter-spacing:0.3px;
+}
+.btn-cta:hover{
+  background:var(--gold2);
+  transform:translateY(-2px);
+  box-shadow:0 12px 50px rgba(201,168,76,0.45);
+}
+.btn-cta-icon{font-size:22px;}
+
+.btn-secondary{
+  display:inline-flex;align-items:center;gap:8px;
+  color:var(--muted);font-size:13px;
+  text-decoration:none;margin-top:16px;
+  letter-spacing:1px;
+  transition:color .2s;
+}
+.btn-secondary:hover{color:var(--gold);}
+
+/* Badge gratuit */
+.badge-free{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(34,197,94,0.1);
+  border:1px solid rgba(34,197,94,0.25);
+  border-radius:20px;padding:5px 14px;
+  font-size:12px;color:#86efac;
+  margin-bottom:24px;
+  letter-spacing:1px;
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;}
+
+/* Scroll indicator */
+.scroll-hint{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  color:var(--border);font-size:10px;letter-spacing:2px;
+  animation:fadeup 2s ease-in-out infinite;
+}
+@keyframes fadeup{0%,100%{opacity:.3;transform:translateX(-50%) translateY(0);}50%{opacity:.8;transform:translateX(-50%) translateY(-4px);}}
+
+/* ══ TÉLÉPHONE MOCKUP ══ */
+.phone-section{
+  position:relative;z-index:1;
+  padding:0 24px 80px;
+  display:flex;flex-direction:column;align-items:center;
+}
+
+.phone-wrap{
+  position:relative;
+  width:260px;
+  filter:drop-shadow(0 40px 80px rgba(0,0,0,0.7)) drop-shadow(0 0 40px rgba(201,168,76,0.1));
+}
+.phone-frame-outer{
+  background:#111;border-radius:44px;
+  padding:10px;
+  border:2px solid #222;
+}
+.phone-screen-wrap{
+  background:var(--deep);
+  border-radius:36px;
+  overflow:hidden;
+  height:520px;
+}
+
+/* Mini app dans le téléphone */
+.mini-status{
+  background:var(--deep);padding:28px 14px 6px;
+  display:flex;justify-content:space-between;
+  font-size:10px;color:var(--text);font-weight:600;
+}
+.mini-header{
+  padding:10px 14px 0;
+  display:flex;justify-content:space-between;align-items:flex-start;
+}
+.mini-logo{font-family:'Amiri',serif;font-size:16px;color:var(--gold);}
+.mini-hijri{font-family:'Amiri',serif;font-size:11px;color:var(--gold2);text-align:right;}
+
+.mini-clock{
+  text-align:center;padding:14px 0 10px;
+  font-size:48px;font-weight:300;letter-spacing:-2px;color:var(--text);
+}
+.mini-clock span{color:var(--gold);}
+
+.mini-location{
+  margin:0 10px 8px;background:var(--card);
+  border:1px solid var(--border);border-radius:10px;
+  padding:8px 12px;display:flex;align-items:center;gap:6px;
+  font-size:10px;
+}
+.mini-loc-city{font-weight:500;color:var(--text);font-size:11px;}
+.mini-loc-meta{color:var(--muted);font-size:9px;}
+
+.mini-adhan-bar{
+  margin:0 10px 8px;
+  background:rgba(34,197,94,0.07);
+  border:1px solid rgba(34,197,94,0.2);
+  border-radius:8px;padding:6px 12px;
+  display:flex;align-items:center;gap:6px;
+  font-size:9px;color:#86efac;
+}
+.mini-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;}
+
+.mini-weather{
+  margin:0 10px 8px;
+  background:linear-gradient(135deg,#0d1f3c,#112240);
+  border:1px solid var(--border);border-radius:12px;
+  padding:10px 12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.mini-temp{font-size:28px;font-weight:300;color:#7bbfff;}
+.mini-cond{font-size:9px;color:var(--muted);}
+.mini-city-w{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.mini-w-icon{font-size:36px;}
+
+.mini-prayer-label{
+  padding:0 10px 4px;
+  font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+}
+
+.mini-prayers{
+  margin:0 10px;display:flex;flex-direction:column;gap:4px;
+}
+.mini-prayer{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:7px 10px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.mini-prayer.active{
+  background:rgba(201,168,76,0.07);border-color:var(--gold);
+}
+.mini-prayer.passed{opacity:.38;}
+.mp-left{display:flex;align-items:center;gap:8px;}
+.mp-icon{font-size:13px;}
+.mp-name{font-size:11px;font-weight:500;color:var(--text);}
+.mp-ar{font-family:'Amiri',serif;font-size:10px;color:var(--muted);}
+.mp-time{font-size:12px;color:var(--text);}
+.mini-prayer.active .mp-time{color:var(--gold2);font-weight:600;}
+.mini-badge{
+  font-size:7px;background:var(--gold);color:#000;
+  padding:1px 4px;border-radius:10px;font-weight:700;margin-left:4px;
+}
+
+/* Glow autour du téléphone */
+.phone-glow{
+  position:absolute;
+  inset:-40px;border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(201,168,76,0.08) 0%, transparent 70%);
+  pointer-events:none;
+  animation:glow 3s ease-in-out infinite;
+}
+@keyframes glow{0%,100%{opacity:0.6;}50%{opacity:1;}}
+
+/* ══ FEATURES ══ */
+.features{
+  position:relative;z-index:1;
+  padding:80px 24px;
+  max-width:500px;margin:0 auto;
+}
+.features-title{
+  font-family:'Amiri',serif;
+  font-size:28px;color:var(--gold2);
+  text-align:center;margin-bottom:8px;
+}
+.features-sub{
+  font-size:13px;color:var(--muted);text-align:center;margin-bottom:40px;
+}
+
+.feature-item{
+  display:flex;align-items:flex-start;gap:16px;
+  margin-bottom:24px;padding:18px 20px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  transition:border-color .2s;
+}
+.feature-item:hover{border-color:rgba(201,168,76,0.3);}
+.feature-icon{
+  font-size:32px;flex-shrink:0;
+  width:52px;height:52px;
+  background:var(--gold3);border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+}
+.feature-text .ft{font-size:10px;color:var(--gold);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.feature-text .fv{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.feature-text .fd{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* ══ STATS ══ */
+.stats{
+  position:relative;z-index:1;
+  padding:40px 24px 80px;
+  display:flex;justify-content:center;gap:0;
+  flex-wrap:wrap;max-width:500px;margin:0 auto;
+}
+.stat-item{
+  flex:1;min-width:100px;text-align:center;
+  padding:20px 12px;
+  border-right:1px solid var(--border);
+}
+.stat-item:last-child{border-right:none;}
+.stat-num{font-size:28px;font-weight:700;color:var(--gold2);}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:1px;}
+
+/* ══ DIVIDER ══ */
+.divider{
+  position:relative;z-index:1;
+  margin:0 24px;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border),transparent);
+}
+
+/* ══ CTA FINAL ══ */
+.cta-section{
+  position:relative;z-index:1;
+  padding:80px 24px 100px;
+  text-align:center;
+}
+.cta-ar{
+  font-family:'Amiri',serif;
+  font-size:32px;color:var(--gold);
+  margin-bottom:8px;
+}
+.cta-fr{
+  font-size:14px;color:var(--muted);
+  margin-bottom:32px;line-height:1.6;
+}
+.cta-url{
+  display:block;
+  font-size:12px;color:var(--muted);
+  letter-spacing:2px;margin-top:16px;
+  text-decoration:none;
+}
+
+/* ══ PARTAGE RÉSEAUX ══ */
+.share-section{
+  position:relative;z-index:1;
+  padding:0 24px 60px;
+  display:flex;flex-direction:column;align-items:center;gap:12px;
+}
+.share-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.share-buttons{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.share-btn{
+  display:flex;align-items:center;gap:8px;
+  padding:12px 20px;border-radius:50px;
+  font-size:13px;font-weight:600;
+  text-decoration:none;cursor:pointer;border:none;
+  font-family:'Inter',sans-serif;
+  transition:all .2s;
+}
+.share-wa{background:#25d366;color:#000;}
+.share-fb{background:#1877f2;color:#fff;}
+.share-tg{background:#2aabee;color:#fff;}
+.share-cp{background:var(--card);color:var(--gold);border:1px solid var(--gold);}
+.share-btn:hover{transform:translateY(-2px);filter:brightness(1.1);}
+
+/* Footer */
+footer{
+  position:relative;z-index:1;
+  text-align:center;padding:20px;
+  font-size:10px;color:var(--border);
+  letter-spacing:1px;
+  border-top:1px solid var(--border);
+}
+
+/* ══ ANIMATIONS ENTRÉE ══ */
+.fade-in{opacity:0;transform:translateY(24px);transition:all .7s ease;}
+.fade-in.visible{opacity:1;transform:translateY(0);}
+
+/* Toast copié */
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--gold);color:#000;
+  font-weight:700;font-size:13px;
+  padding:12px 24px;border-radius:50px;
+  transition:transform .3s;z-index:999;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="toast" id="toast">✅ Lien copié !</div>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="moon"></div>
+
+  <div class="crescent">🌙</div>
+
+  <div class="hero-eyebrow">Application islamique gratuite</div>
+
+  <div class="hero-ar fade-in">لا تغفل عن صلاتك يا مسلم</div>
+
+  <h1 class="hero-title fade-in">
+    <strong>صلاتك × Météo</strong><br>
+    L'Adhan sur ton téléphone,<br>où que tu sois dans le monde
+  </h1>
+
+  <p class="hero-sub fade-in">
+    Horaires de prière précis · Adhan automatique<br>
+    Boussole Qibla · Météo en temps réel<br>
+    Pour toutes les villes du monde 🌍
+  </p>
+
+  <div class="badge-free fade-in">
+    <div class="badge-dot"></div>
+    100% GRATUIT · SANS INSCRIPTION · SANS PUB
+  </div>
+
+  <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/" target="_blank" class="btn-cta fade-in">
+    <span class="btn-cta-icon">🕌</span>
+    Ouvrir l'application
+  </a>
+
+  <a href="#features" class="btn-secondary fade-in">Voir les fonctionnalités ↓</a>
+
+  <div class="scroll-hint">
+    <span>↓</span>
+    <span>DÉCOUVRIR</span>
+  </div>
+</section>
+
+<!-- ══ TÉLÉPHONE ══ -->
+<section class="phone-section">
+  <div class="phone-wrap">
+    <div class="phone-glow"></div>
+    <div class="phone-frame-outer">
+      <div class="phone-screen-wrap">
+
+        <div class="mini-status">
+          <span>13:25</span>
+          <span>📶 🔋 67%</span>
+        </div>
+
+        <div class="mini-header">
+          <div>
+            <div style="font-size:9px;color:var(--muted);letter-spacing:2px;">DASHBOARD</div>
+            <div class="mini-logo">صلاتك × Météo</div>
+          </div>
+          <div>
+            <div class="mini-hijri">١٥ محرم ١٤٤٧</div>
+            <div style="font-size:9px;color:var(--muted);text-align:right;">Dim. 9 août</div>
+          </div>
+        </div>
+
+        <div class="mini-clock">13<span>:</span>25</div>
+
+        <div class="mini-location">
+          <span>📍</span>
+          <div>
+            <div class="mini-loc-city">Alger, Algérie</div>
+            <div class="mini-loc-meta">Méthode: Algérie · Adhan: Makkah</div>
+          </div>
+        </div>
+
+        <div class="mini-adhan-bar">
+          <div class="mini-dot"></div>
+          <span>Adhan actif · prières surveillées</span>
+        </div>
+
+        <div class="mini-weather">
+          <div>
+            <div class="mini-city-w">Alger</div>
+            <div class="mini-temp">31°</div>
+            <div class="mini-cond">Partiellement nuageux</div>
+          </div>
+          <div class="mini-w-icon">⛅</div>
+        </div>
+
+        <div class="mini-prayer-label">Horaires des prières</div>
+        <div class="mini-prayers">
+          <div class="mini-prayer passed">
+            <div class="mp-left"><span class="mp-icon">🌙</span><div><div class="mp-name">Fajr</div><div class="mp-ar">الفجر</div></div></div>
+            <div class="mp-time">04:21</div>
+          </div>
+          <div class="mini-prayer passed">
+            <div class="mp-left"><span class="mp-icon">☀️</span><div><div class="mp-name">Dhuhr</div><div class="mp-ar">الظهر</div></div></div>
+            <div class="mp-time">12:48</div>
+          </div>
+          <div class="mini-prayer active">
+            <div class="mp-left"><span class="mp-icon">🌤</span><div><div class="mp-name">Asr<span class="mini-badge">EN COURS</span></div><div class="mp-ar">العصر</div></div></div>
+            <div class="mp-time">16:22</div>
+          </div>
+          <div class="mini-prayer">
+            <div class="mp-left"><span class="mp-icon">🌅</span><div><div class="mp-name">Maghrib</div><div class="mp-ar">المغرب</div></div></div>
+            <div class="mp-time">19:52</div>
+          </div>
+          <div class="mini-prayer">
+            <div class="mp-left"><span class="mp-icon">🌌</span><div><div class="mp-name">Isha</div><div class="mp-ar">العشاء</div></div></div>
+            <div class="mp-time">21:18</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ STATS ══ -->
+<div class="stats fade-in">
+  <div class="stat-item">
+    <div class="stat-num">5</div>
+    <div class="stat-label">Prières / jour</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">195</div>
+    <div class="stat-label">Pays couverts</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">4</div>
+    <div class="stat-label">Adhans disponibles</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ══ FEATURES ══ -->
+<section class="features" id="features">
+  <div class="features-title fade-in">Ce que l'app fait pour toi</div>
+  <div class="features-sub fade-in">Simple, précis, automatique</div>
+
+  <div class="feature-item fade-in">
+    <div class="feature-icon">🔊</div>
+    <div class="feature-text">
+      <div class="ft">Adhan automatique</div>
+      <div class="fv">L'Adhan sonne à l'heure exacte</div>
+      <div class="fd">Mishary Alafasy · Style Makkah, Madinah, Égypte ou Fajr spécial avec الصلاة خير من النوم</div>
+    </div>
+  </div>
+
+  <div class="feature-item fade-in">
+    <div class="feature-icon">🌍</div>
+    <div class="feature-text">
+      <div class="ft">Monde entier</div>
+      <div class="fv">Toutes les villes du monde</div>
+      <div class="fd">Alger, Paris, Istanbul, Le Caire, New York… Calcul précis par coordonnées GPS</div>
+    </div>
+  </div>
+
+  <div class="feature-item fade-in">
+    <div class="feature-icon">🧭</div>
+    <div class="feature-text">
+      <div class="ft">Qibla · القبلة</div>
+      <div class="fv">Boussole vers La Mecque</div>
+      <div class="fd">Direction exacte + distance en km. Utilise le gyroscope de ton téléphone en temps réel</div>
+    </div>
+  </div>
+
+  <div class="feature-item fade-in">
+    <div class="feature-icon">⛅</div>
+    <div class="feature-text">
+      <div class="ft">Météo</div>
+      <div class="fv">Température + prévisions horaires</div>
+      <div class="fd">Mise à jour toutes les 30 minutes. Humidité, vent, ressenti, indice UV</div>
+    </div>
+  </div>
+
+  <div class="feature-item fade-in">
+    <div class="feature-icon">📱</div>
+    <div class="feature-text">
+      <div class="ft">Installable</div>
+      <div class="fv">Comme une vraie application</div>
+      <div class="fd">Ajoute à ton écran d'accueil. Fonctionne hors connexion. Aucun App Store requis</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ══ CTA FINAL ══ -->
+<section class="cta-section">
+  <div class="cta-ar fade-in">بسم الله الرحمن الرحيم</div>
+  <p class="cta-fr fade-in">
+    Partage cette application avec ta famille,<br>
+    tes amis et toute la communauté musulmane.<br>
+    <strong style="color:var(--gold)">بارك الله فيكم</strong>
+  </p>
+
+  <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/" target="_blank" class="btn-cta fade-in">
+    <span class="btn-cta-icon">🕌</span>
+    Ouvrir l'application gratuitement
+  </a>
+
+  <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/" class="cta-url">
+    tafatkhaled901-cmyk.github.io/Salatouka
+  </a>
+</section>
+
+<!-- ══ PARTAGE ══ -->
+<section class="share-section">
+  <div class="share-label">Partager maintenant</div>
+  <div class="share-buttons">
+    <a class="share-btn share-wa" href="https://wa.me/?text=%F0%9F%95%8C%20%D8%B5%D9%84%D8%A7%D8%AA%D9%83%20%C3%97%20M%C3%A9t%C3%A9o%20%E2%80%94%20Application%20islamique%20GRATUITE%0A%0A%D9%84%D8%A7%20%D8%AA%D8%BA%D9%81%D9%84%20%D8%B9%D9%86%20%D8%B5%D9%84%D8%A7%D8%AA%D9%83%20%D9%8A%D8%A7%20%D9%85%D8%B3%D9%84%D9%85%20%F0%9F%A4%B2%0A%0A%E2%9C%85%20Adhan%20automatique%0A%E2%9C%85%20Toutes%20les%20villes%20du%20monde%0A%E2%9C%85%20Boussole%20Qibla%0A%E2%9C%85%20M%C3%A9t%C3%A9o%20en%20temps%20r%C3%A9el%0A%E2%9C%85%20Sans%20inscription%2C%20sans%20pub%0A%0Ahttps%3A%2F%2Ftafatkhaled901-cmyk.github.io%2FSalatouka%2F" target="_blank">
+      📱 WhatsApp
+    </a>
+    <a class="share-btn share-fb" href="https://www.facebook.com/sharer/sharer.php?u=https://tafatkhaled901-cmyk.github.io/Salatouka/" target="_blank">
+      📘 Facebook
+    </a>
+    <a class="share-btn share-tg" href="https://t.me/share/url?url=https://tafatkhaled901-cmyk.github.io/Salatouka/&text=صلاتك × Météo — Application islamique gratuite 🕌" target="_blank">
+      ✈️ Telegram
+    </a>
+    <button class="share-btn share-cp" onclick="copyLink()">
+      🔗 Copier le lien
+    </button>
+  </div>
+</section>
+
+<footer>
+  صلاتك × MÉTÉO · بسم الله الرحمن الرحيم · Application islamique gratuite
+</footer>
+
+<script>
+// Animations au scroll
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// Copier le lien
+function copyLink() {
+  navigator.clipboard.writeText('https://tafatkhaled901-cmyk.github.io/Salatouka/').then(() => {
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  });
+}
+
+// Horloge live dans le mockup
+function updateMiniClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const el = document.querySelector('.mini-clock');
+  if(el) el.innerHTML = `${h}<span style="color:var(--gold)">:</span>${m}`;
+}
+updateMiniClock();
+setInterval(updateMiniClock, 1000);
+</script>
+</body>
+</html>
