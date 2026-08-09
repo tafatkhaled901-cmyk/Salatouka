@@ -1,6 +1,15 @@
-// Service Worker — Salatuk × Météo
-const CACHE = 'salatuk-v1';
-const ASSETS = ['./index.html','./manifest.json','./icon-192.png','./icon-512.png'];
+// Service Worker — Salatuk × Météo v2
+const CACHE = 'salatuk-v2';
+const ASSETS = [
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './adhan-makkah.wav',
+  './adhan-madinah.wav',
+  './adhan-egypt.wav',
+  './adhan-fajr.wav',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
@@ -15,7 +24,6 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Réseau d'abord, cache en fallback
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );
