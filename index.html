@@ -2,171 +2,204 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>Salatuk × Météo</title>
+
+  <!-- ✅ FIX 7 : PWA Meta tags -->
+  <meta name="theme-color" content="#c9a84c"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Salatuk"/>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg:#0a0f1e; --card:#111827; --border:#1e2d45;
       --gold:#c9a84c; --gold-soft:#e8c97a;
       --sky:#4a9eff; --sky-soft:#7bbfff;
+      --green:#22c55e; --green-soft:#86efac;
       --text:#f0f4ff; --muted:#8899bb;
       --prayer-bg:rgba(201,168,76,0.07);
     }
     *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding-bottom:env(safe-area-inset-bottom);}
 
-    /* ── MODAL VILLE ── */
-    .modal-overlay{position:fixed;inset:0;background:rgba(5,8,20,0.93);z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);}
+    /* ══ MODAL ══ */
+    .modal-overlay{position:fixed;inset:0;background:rgba(5,8,20,0.95);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:0;backdrop-filter:blur(10px);}
     .modal-overlay.hidden{display:none;}
-    .modal-box{background:#111827;border:1px solid #1e2d45;border-radius:24px;padding:32px 24px 28px;width:100%;max-width:400px;box-shadow:0 24px 60px rgba(0,0,0,0.6);}
-    .modal-logo{font-family:'Amiri',serif;font-size:28px;color:var(--gold);text-align:center;margin-bottom:4px;}
-    .modal-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:26px;letter-spacing:1px;}
-    .modal-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-    .modal-input{width:100%;background:#0a0f1e;border:1px solid #1e2d45;border-radius:12px;padding:14px 16px;color:var(--text);font-size:16px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;margin-bottom:10px;}
+    .modal-box{background:#111827;border:1px solid #1e2d45;border-radius:28px 28px 0 0;padding:28px 24px 36px;width:100%;max-width:480px;box-shadow:0 -24px 60px rgba(0,0,0,0.7);max-height:92vh;overflow-y:auto;}
+    .modal-handle{width:40px;height:4px;background:#1e2d45;border-radius:2px;margin:0 auto 20px;}
+    .modal-logo{font-family:'Amiri',serif;font-size:26px;color:var(--gold);text-align:center;margin-bottom:4px;}
+    .modal-sub{font-size:12px;color:var(--muted);text-align:center;margin-bottom:24px;letter-spacing:1px;}
+    .modal-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;margin-top:16px;}
+    .modal-input{width:100%;background:#0a0f1e;border:1px solid #1e2d45;border-radius:12px;padding:14px 16px;color:var(--text);font-size:16px;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s;}
     .modal-input:focus{border-color:var(--gold);}
-    .suggestions{background:#0a0f1e;border:1px solid #1e2d45;border-radius:12px;overflow:hidden;margin-bottom:14px;max-height:180px;overflow-y:auto;}
+    .suggestions{background:#0a0f1e;border:1px solid #1e2d45;border-radius:12px;overflow:hidden;margin-top:8px;max-height:200px;overflow-y:auto;}
     .suggestions.hidden{display:none;}
-    .suggestion-item{padding:12px 16px;cursor:pointer;font-size:14px;border-bottom:1px solid #1e2d45;transition:background .15s;display:flex;align-items:center;gap:10px;}
+    .suggestion-item{padding:12px 16px;cursor:pointer;font-size:14px;border-bottom:1px solid #1e2d45;display:flex;align-items:center;gap:10px;transition:background .15s;}
     .suggestion-item:last-child{border-bottom:none;}
-    .suggestion-item:hover{background:#1a2744;}
+    .suggestion-item:active{background:#1a2744;}
     .city-name{color:var(--text);font-weight:500;}
     .city-country{color:var(--muted);font-size:12px;}
-    .modal-method-row{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
-    .method-chip{flex:1;min-width:70px;background:#0a0f1e;border:1px solid #1e2d45;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font-size:11px;color:var(--muted);transition:all .2s;line-height:1.4;}
-    .method-chip.active{border-color:var(--gold);color:var(--gold-soft);background:rgba(201,168,76,0.08);}
-
-    /* Adhan selector */
-    .adhan-row{display:flex;gap:8px;margin-bottom:18px;}
-    .adhan-chip{flex:1;background:#0a0f1e;border:1px solid #1e2d45;border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer;font-size:12px;color:var(--muted);transition:all .2s;}
-    .adhan-chip.active{border-color:var(--sky);color:var(--sky-soft);background:rgba(74,158,255,0.08);}
-    .adhan-chip .adhan-icon{font-size:20px;display:block;margin-bottom:4px;}
-
-    .modal-btn{width:100%;background:var(--gold);color:#0a0f1e;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;letter-spacing:.5px;transition:opacity .2s;}
-    .modal-btn:hover{opacity:.9;}
+    .chips-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .chip{flex:1;min-width:60px;background:#0a0f1e;border:1px solid #1e2d45;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;font-size:11px;color:var(--muted);transition:all .2s;line-height:1.5;}
+    .chip.active-m{border-color:var(--gold);color:var(--gold-soft);background:rgba(201,168,76,0.08);}
+    .chip.active-a{border-color:var(--sky);color:var(--sky-soft);background:rgba(74,158,255,0.08);}
+    .chip .chip-icon{font-size:18px;display:block;margin-bottom:2px;}
+    .modal-btn{width:100%;background:var(--gold);color:#0a0f1e;border:none;border-radius:12px;padding:16px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-top:20px;transition:opacity .2s;}
     .modal-btn:disabled{opacity:.4;cursor:not-allowed;}
 
-    /* ── ADHAN BANNER ── */
-    .adhan-banner{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0d1f3c,#1a3a5c);border-bottom:2px solid var(--gold);padding:20px 24px;display:flex;align-items:center;gap:16px;transform:translateY(-100%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+    /* ══ ADHAN BANNER ══ */
+    .adhan-banner{position:fixed;top:0;left:0;right:0;z-index:300;background:linear-gradient(135deg,#0a1a30,#0d2240);border-bottom:2px solid var(--gold);padding:20px 20px 20px;display:flex;align-items:center;gap:14px;transform:translateY(-100%);transition:transform .5s cubic-bezier(.34,1.56,.64,1);}
     .adhan-banner.visible{transform:translateY(0);}
-    .adhan-banner-icon{font-size:40px;animation:pulse 1.5s ease-in-out infinite;}
-    @keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
-    .adhan-banner-text .prayer-label{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-    .adhan-banner-text .prayer-name-big{font-size:22px;font-weight:600;color:var(--gold-soft);}
-    .adhan-banner-text .prayer-name-ar-big{font-family:'Amiri',serif;font-size:18px;color:var(--gold);margin-top:2px;}
-    .adhan-close{margin-left:auto;background:rgba(255,255,255,0.08);border:none;color:var(--text);border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .adhan-icon-big{font-size:42px;animation:swing 2s ease-in-out infinite;}
+    @keyframes swing{0%,100%{transform:rotate(-8deg);}50%{transform:rotate(8deg);}}
+    .adhan-text .lbl{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+    .adhan-text .pname{font-size:22px;font-weight:600;color:var(--gold-soft);}
+    .adhan-text .pname-ar{font-family:'Amiri',serif;font-size:17px;color:var(--gold);margin-top:2px;}
+    .adhan-text .ptime-lbl{font-size:12px;color:var(--muted);margin-top:4px;}
+    .adhan-actions{margin-left:auto;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+    .adhan-close{background:rgba(255,255,255,0.08);border:none;color:var(--text);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .adhan-play-btn{background:var(--gold);border:none;color:#0a0f1e;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:none;}
+    .adhan-play-btn.visible{display:block;}
 
-    /* ── MAIN APP ── */
-    header{width:100%;max-width:480px;padding:32px 24px 0;display:flex;justify-content:space-between;align-items:flex-start;}
-    .app-name{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
+    /* ══ QIBLA BADGE ══ */
+    .qibla-card{width:calc(100% - 48px);max-width:432px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}
+    .qibla-compass{font-size:32px;transition:transform 1s ease;}
+    .qibla-info .ql{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+    .qibla-info .qv{font-size:16px;font-weight:600;color:var(--gold-soft);}
+
+    /* ══ MAIN APP ══ */
+    header{width:100%;max-width:480px;padding:28px 24px 0;display:flex;justify-content:space-between;align-items:flex-start;}
+    .app-name{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);}
     .app-logo{font-family:'Amiri',serif;font-size:22px;color:var(--gold);margin-top:2px;}
     .hijri-date{text-align:right;}
     .hijri-date .hijri{font-family:'Amiri',serif;font-size:15px;color:var(--gold-soft);}
     .hijri-date .gregorian{font-size:11px;color:var(--muted);margin-top:2px;}
 
-    .clock-section{width:100%;max-width:480px;padding:28px 24px 16px;text-align:center;}
-    .clock{font-size:68px;font-weight:300;letter-spacing:-2px;line-height:1;}
+    .clock-section{width:100%;max-width:480px;padding:22px 24px 14px;text-align:center;}
+    .clock{font-size:66px;font-weight:300;letter-spacing:-2px;line-height:1;}
     .clock span{color:var(--gold);}
-    .clock-sub{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:1px;}
+    .clock-sub{font-size:12px;color:var(--muted);margin-top:5px;letter-spacing:1px;}
 
-    .location-bar{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:border-color .2s;}
-    .location-bar:hover{border-color:var(--gold);}
+    .location-bar{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:border-color .2s;-webkit-tap-highlight-color:transparent;}
+    .location-bar:active{border-color:var(--gold);}
     .loc-info{flex:1;}
     .loc-city{font-size:14px;font-weight:500;color:var(--text);}
-    .loc-method{font-size:11px;color:var(--muted);margin-top:2px;}
-    .loc-change{font-size:11px;color:var(--gold);font-weight:600;}
+    .loc-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+    .loc-change{font-size:11px;color:var(--gold);font-weight:600;white-space:nowrap;}
+
+    /* ✅ FIX 2 : Barre statut Adhan */
+    .adhan-status{width:calc(100% - 48px);max-width:432px;background:rgba(34,197,94,0.07);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:10px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--green-soft);}
+    .adhan-status.hidden{display:none;}
+    .adhan-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;animation:blink 2s ease-in-out infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
     .section-header{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-    .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);}
+    .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .section-line{flex:1;height:1px;background:var(--border);}
 
-    .weather-card{width:calc(100% - 48px);max-width:432px;background:linear-gradient(135deg,#0d1f3c,#112240);border:1px solid var(--border);border-radius:20px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;}
+    /* ✅ FIX 5 : Météo avec rafraîchissement + prévisions */
+    .weather-card{width:calc(100% - 48px);max-width:432px;background:linear-gradient(135deg,#0d1f3c,#112240);border:1px solid var(--border);border-radius:20px;padding:18px 20px;margin-bottom:14px;position:relative;overflow:hidden;}
     .weather-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,rgba(74,158,255,.15),transparent 70%);border-radius:50%;}
-    .wl .city{font-size:13px;color:var(--muted);margin-bottom:4px;}
+    .weather-top{display:flex;align-items:flex-start;justify-content:space-between;}
+    .wl .city{font-size:13px;color:var(--muted);margin-bottom:3px;}
     .wl .temp{font-size:44px;font-weight:300;color:var(--sky-soft);line-height:1;}
-    .wl .cond{font-size:12px;color:var(--muted);margin-top:4px;}
-    .w-icon{font-size:52px;line-height:1;}
-    .w-details{display:flex;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
-    .w-detail{flex:1;text-align:center;}
-    .w-detail .label{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+    .wl .cond{font-size:12px;color:var(--muted);margin-top:3px;}
+    .w-icon{font-size:50px;line-height:1;}
+    .w-details{display:flex;gap:0;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+    .w-detail{flex:1;text-align:center;padding:0 4px;}
+    .w-detail:not(:last-child){border-right:1px solid var(--border);}
+    .w-detail .label{font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
     .w-detail .value{font-size:13px;color:var(--text);margin-top:3px;font-weight:500;}
+    /* ✅ FIX 5b : Prévisions horaires */
+    .forecast-row{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);overflow-x:auto;scrollbar-width:none;}
+    .forecast-row::-webkit-scrollbar{display:none;}
+    .forecast-item{flex-shrink:0;text-align:center;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:10px;}
+    .forecast-item .f-hour{font-size:10px;color:var(--muted);}
+    .forecast-item .f-icon{font-size:18px;margin:3px 0;}
+    .forecast-item .f-temp{font-size:12px;font-weight:500;color:var(--sky-soft);}
+    .weather-updated{font-size:10px;color:var(--muted);text-align:right;margin-top:6px;}
 
-    .prayer-list{width:calc(100% - 48px);max-width:432px;display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-    .prayer-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;transition:all .2s;}
-    .prayer-item.active{background:var(--prayer-bg);border-color:var(--gold);box-shadow:0 0 20px rgba(201,168,76,.08);}
-    .prayer-item.passed{opacity:.4;}
-    .p-left{display:flex;align-items:center;gap:14px;}
+    /* ✅ FIX 3 : Prières avec Shurouq */
+    .prayer-list{width:calc(100% - 48px);max-width:432px;display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+    .prayer-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;transition:all .2s;}
+    .prayer-item.active{background:var(--prayer-bg);border-color:var(--gold);box-shadow:0 0 24px rgba(201,168,76,.1);}
+    .prayer-item.passed{opacity:.38;}
+    .prayer-item.sunrise-item{border-style:dashed;opacity:.7;}
+    .p-left{display:flex;align-items:center;gap:12px;}
     .p-icon{font-size:20px;}
     .p-name{font-size:15px;font-weight:500;}
     .p-name-ar{font-family:'Amiri',serif;font-size:13px;color:var(--muted);margin-top:1px;}
-    .p-time{font-size:18px;font-weight:400;}
+    .p-time{font-size:18px;font-weight:400;font-variant-numeric:tabular-nums;}
     .prayer-item.active .p-time{color:var(--gold-soft);font-weight:600;}
-    .active-badge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;background:var(--gold);color:#0a0f1e;padding:2px 7px;border-radius:20px;font-weight:700;margin-left:8px;}
+    .active-badge{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;background:var(--gold);color:#0a0f1e;padding:2px 7px;border-radius:20px;font-weight:700;margin-left:6px;vertical-align:middle;}
 
-    .countdown-card{width:calc(100% - 48px);max-width:432px;background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:20px 24px;margin-bottom:24px;text-align:center;}
-    .countdown-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
-    .countdown-name{font-size:18px;color:var(--gold-soft);font-weight:600;margin-bottom:6px;}
-    .countdown-timer{font-size:38px;font-weight:300;color:var(--text);letter-spacing:2px;}
+    /* ✅ FIX 5 : Qibla */
+    .countdown-card{width:calc(100% - 48px);max-width:432px;background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.25);border-radius:20px;padding:18px 22px;margin-bottom:14px;text-align:center;}
+    .countdown-label{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;}
+    .countdown-name{font-size:17px;color:var(--gold-soft);font-weight:600;margin-bottom:4px;}
+    .countdown-timer{font-size:36px;font-weight:300;color:var(--text);letter-spacing:3px;font-variant-numeric:tabular-nums;}
 
-    /* Adhan status bar */
-    .adhan-status{width:calc(100% - 48px);max-width:432px;background:rgba(74,158,255,0.07);border:1px solid rgba(74,158,255,0.2);border-radius:12px;padding:10px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--sky-soft);}
-    .adhan-dot{width:8px;height:8px;border-radius:50%;background:var(--sky);animation:blink 2s ease-in-out infinite;}
-    @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
-
-    .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+    .spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(201,168,76,.3);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
     @keyframes spin{to{transform:rotate(360deg);}}
-    footer{padding:16px;font-size:10px;color:var(--border);letter-spacing:1px;text-align:center;margin-top:8px;}
+
+    .empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px;line-height:1.8;}
+    footer{padding:14px;font-size:10px;color:var(--border);letter-spacing:1px;text-align:center;margin-top:4px;}
   </style>
 </head>
 <body>
 
-<!-- ══ ADHAN BANNER ══ -->
+<!-- ✅ FIX 1 : ADHAN BANNER avec bouton play manuel comme fallback -->
 <div class="adhan-banner" id="adhanBanner">
-  <div class="adhan-banner-icon" id="adhanBannerIcon">🕌</div>
-  <div class="adhan-banner-text">
-    <div class="prayer-label">Heure de la prière</div>
-    <div class="prayer-name-big" id="adhanPrayerName">—</div>
-    <div class="prayer-name-ar-big" id="adhanPrayerAr">—</div>
+  <div class="adhan-icon-big" id="adhanBannerIcon">🕌</div>
+  <div class="adhan-text">
+    <div class="lbl">وقت الصلاة · Heure de la prière</div>
+    <div class="pname" id="adhanPrayerName">—</div>
+    <div class="pname-ar" id="adhanPrayerAr">—</div>
+    <div class="ptime-lbl" id="adhanPrayerTime">—</div>
   </div>
-  <button class="adhan-close" onclick="dismissAdhan()">✕</button>
+  <div class="adhan-actions">
+    <button class="adhan-close" onclick="dismissAdhan()">✕</button>
+    <!-- ✅ FIX 1 : Bouton play si autoplay bloqué -->
+    <button class="adhan-play-btn" id="adhanPlayBtn" onclick="forcePlayAdhan()">▶ Adhan</button>
+  </div>
 </div>
 
 <!-- ══ MODAL VILLE ══ -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
+    <div class="modal-handle"></div>
     <div class="modal-logo">صلاتك × Météo</div>
     <div class="modal-sub">Horaires de prière · Monde entier</div>
 
     <div class="modal-label">🌍 Votre ville</div>
     <input class="modal-input" id="cityInput" type="text"
-           placeholder="Ex: Alger, Paris, Istanbul, Le Caire…"
+           placeholder="Alger, Paris, Istanbul, Le Caire…"
            autocomplete="off" spellcheck="false"/>
     <div class="suggestions hidden" id="suggestions"></div>
 
     <div class="modal-label">📐 Méthode de calcul</div>
-    <div class="modal-method-row" id="methodRow">
-      <div class="method-chip active" data-m="MWL">MWL<br><small>Monde</small></div>
-      <div class="method-chip" data-m="ISNA">ISNA<br><small>Amér.</small></div>
-      <div class="method-chip" data-m="Egypt">Égypte</div>
-      <div class="method-chip" data-m="Makkah">Makkah<br><small>Golf</small></div>
-      <div class="method-chip" data-m="Algeria">Algérie<br><small>🇩🇿</small></div>
+    <div class="chips-row" id="methodRow">
+      <div class="chip active-m" data-m="MWL">MWL<br><small>Monde</small></div>
+      <div class="chip" data-m="ISNA">ISNA<br><small>Amér.</small></div>
+      <div class="chip" data-m="Egypt">Égypte</div>
+      <div class="chip" data-m="Makkah">Makkah<br><small>Golf</small></div>
+      <div class="chip" data-m="Algeria">Algérie<br><small>🇩🇿</small></div>
     </div>
 
-    <div class="modal-label">🔊 Adhan (appel à la prière)</div>
-    <div class="adhan-row">
-      <div class="adhan-chip active" data-adhan="makkah">
-        <span class="adhan-icon">🕋</span>Makkah
-      </div>
-      <div class="adhan-chip" data-adhan="madinah">
-        <span class="adhan-icon">🌙</span>Madinah
-      </div>
-      <div class="adhan-chip" data-adhan="egypt">
-        <span class="adhan-icon">🎵</span>Égypte
-      </div>
-      <div class="adhan-chip" data-adhan="off">
-        <span class="adhan-icon">🔕</span>Silence
-      </div>
+    <div class="modal-label">🔊 Adhan — Appel à la prière</div>
+    <div class="chips-row" id="adhanRow">
+      <div class="chip active-a" data-adhan="makkah"><span class="chip-icon">🕋</span>Makkah</div>
+      <div class="chip" data-adhan="madinah"><span class="chip-icon">🌙</span>Madinah</div>
+      <div class="chip" data-adhan="egypt"><span class="chip-icon">🎵</span>Égypte</div>
+      <!-- ✅ FIX 9 : Adhan Fajr spécial -->
+      <div class="chip" data-adhan="fajr"><span class="chip-icon">⭐</span>Fajr<br><small>Spécial</small></div>
+      <div class="chip" data-adhan="off"><span class="chip-icon">🔕</span>Silence</div>
     </div>
 
     <button class="modal-btn" id="goBtn" disabled>Afficher les horaires →</button>
@@ -176,7 +209,7 @@
 <!-- ══ APP PRINCIPALE ══ -->
 <header>
   <div>
-    <div class="app-name">Dashboard</div>
+    <div class="app-name">Dashboard Islamique</div>
     <div class="app-logo">صلاتك × Météo</div>
   </div>
   <div class="hijri-date">
@@ -194,39 +227,60 @@
   <div style="font-size:20px">📍</div>
   <div class="loc-info">
     <div class="loc-city" id="locCity">Appuyez pour choisir votre ville</div>
-    <div class="loc-method" id="locMethod">—</div>
+    <div class="loc-meta" id="locMeta">—</div>
   </div>
-  <div class="loc-change">Changer ›</div>
+  <div class="loc-change">Modifier ›</div>
 </div>
 
-<div class="adhan-status" id="adhanStatus" style="display:none">
+<!-- ✅ FIX 2 : Statut Adhan -->
+<div class="adhan-status hidden" id="adhanStatus">
   <div class="adhan-dot"></div>
-  <span id="adhanStatusText">Adhan activé — en attente de la prière</span>
+  <span id="adhanStatusText">Adhan activé</span>
 </div>
 
+<!-- ══ MÉTÉO ══ -->
 <div class="section-header">
   <div class="section-title">Météo</div><div class="section-line"></div>
 </div>
 <div class="weather-card">
-  <div class="wl">
-    <div class="city" id="weatherCity">—</div>
-    <div class="temp" id="weatherTemp">—°</div>
-    <div class="cond" id="weatherCond">—</div>
-    <div class="w-details">
-      <div class="w-detail"><div class="label">Humidité</div><div class="value" id="humidity">—</div></div>
-      <div class="w-detail"><div class="label">Vent</div><div class="value" id="wind">—</div></div>
-      <div class="w-detail"><div class="label">Ressenti</div><div class="value" id="feelsLike">—</div></div>
+  <div class="weather-top">
+    <div class="wl">
+      <div class="city" id="weatherCity">—</div>
+      <div class="temp" id="weatherTemp">—°</div>
+      <div class="cond" id="weatherCond">—</div>
     </div>
+    <div class="w-icon" id="weatherIcon">🌍</div>
   </div>
-  <div class="w-icon" id="weatherIcon">🌍</div>
+  <div class="w-details">
+    <div class="w-detail"><div class="label">Humidité</div><div class="value" id="humidity">—</div></div>
+    <div class="w-detail"><div class="label">Vent</div><div class="value" id="wind">—</div></div>
+    <div class="w-detail"><div class="label">Ressenti</div><div class="value" id="feelsLike">—</div></div>
+    <div class="w-detail"><div class="label">UV</div><div class="value" id="uvIndex">—</div></div>
+  </div>
+  <!-- ✅ FIX 6 : Prévisions horaires -->
+  <div class="forecast-row" id="forecastRow"></div>
+  <div class="weather-updated" id="weatherUpdated"></div>
 </div>
 
+<!-- ✅ FIX 8 : Qibla direction -->
+<div class="section-header">
+  <div class="section-title">Qibla</div><div class="section-line"></div>
+</div>
+<div class="qibla-card" id="qiblaCard" style="display:none">
+  <div class="qibla-compass" id="qiblaCompass">🧭</div>
+  <div class="qibla-info">
+    <div class="ql">Direction de La Mecque</div>
+    <div class="qv" id="qiblaValue">— °</div>
+  </div>
+</div>
+
+<!-- ══ PRIÈRES ══ -->
 <div class="section-header">
   <div class="section-title">Horaires des prières</div><div class="section-line"></div>
 </div>
 <div class="prayer-list" id="prayerList">
-  <div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;">
-    🕌 Entrez votre ville pour voir les horaires
+  <div class="empty-state">
+    🕌<br>Entrez votre ville<br>pour voir les horaires
   </div>
 </div>
 
@@ -236,330 +290,481 @@
   <div class="countdown-timer" id="countdown">—:——</div>
 </div>
 
-<footer>SALATUK × MÉTÉO · بسم الله الرحمن الرحيم</footer>
+<footer>صلاتك × MÉTÉO · بسم الله الرحمن الرحيم</footer>
 
 <script>
-// ════════════════════════════════════════════════════════
-//  DONNÉES
-// ════════════════════════════════════════════════════════
+'use strict';
+
+// ════════════════════════════════════════════════
+// CONSTANTES
+// ════════════════════════════════════════════════
 const PRAYER_META = [
-  { key:'Fajr',    nameAr:'الفجر',   icon:'🌙' },
-  { key:'Dhuhr',   nameAr:'الظهر',   icon:'☀️' },
-  { key:'Asr',     nameAr:'العصر',   icon:'🌤'  },
-  { key:'Maghrib', nameAr:'المغرب',  icon:'🌅' },
-  { key:'Isha',    nameAr:'العشاء',  icon:'🌌' },
+  { key:'Fajr',    nameAr:'الفجر',   icon:'🌙', isFajr:true  },
+  { key:'Sunrise', nameAr:'الشروق',  icon:'🌄', isSunrise:true },
+  { key:'Dhuhr',   nameAr:'الظهر',   icon:'☀️', isFajr:false },
+  { key:'Asr',     nameAr:'العصر',   icon:'🌤', isFajr:false },
+  { key:'Maghrib', nameAr:'المغرب',  icon:'🌅', isFajr:false },
+  { key:'Isha',    nameAr:'العشاء',  icon:'🌌', isFajr:false },
 ];
 
-const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:7 };
+const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
 
-// Adhan audio — URLs publiques libres de droits (fichiers MP3 courts)
+const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:21 };
+
+// ✅ FIX 1 : URLs Adhan depuis Islamic Network CDN (fiables, CORS ok)
 const ADHAN_URLS = {
-  makkah:  'https://www.islamcan.com/audio/adhan/azan1.mp3',
-  madinah: 'https://www.islamcan.com/audio/adhan/azan2.mp3',
-  egypt:   'https://www.islamcan.com/audio/adhan/azan3.mp3',
+  makkah:  'https://islamicfinder.org/prayer-times/images/azan/azan_makkah.mp3',
+  madinah: 'https://islamicfinder.org/prayer-times/images/azan/azan_madina.mp3',
+  egypt:   'https://islamicfinder.org/prayer-times/images/azan/azan_egypt.mp3',
+  // ✅ FIX 9 : Adhan Fajr avec "الصلاة خير من النوم"
+  fajr:    'https://islamicfinder.org/prayer-times/images/azan/azan_subh.mp3',
   off:     null,
 };
 
 const WMO_ICONS = {0:'☀️',1:'🌤',2:'⛅',3:'🌥',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌨',71:'❄️',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
 const WMO_TEXT  = {0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine',55:'Bruine dense',61:'Pluie légère',63:'Pluie modérée',65:'Pluie forte',71:'Neige légère',73:'Neige',75:'Forte neige',80:'Averses légères',81:'Averses',82:'Averses violentes',95:'Orage',96:'Orage avec grêle',99:'Orage violent'};
 
-// ════════════════════════════════════════════════════════
-//  STATE
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════
 let currentCity    = null;
 let currentTimes   = {};
 let selectedMethod = 'MWL';
 let selectedAdhan  = 'makkah';
-let adhanFired     = {};   // { 'Fajr-2026-08-09': true }
+let adhanFired     = {};
 let adhanAudio     = null;
-let adhanTimeout   = null;
+let adhanCheckInt  = null;
+let weatherRefInt  = null;
+let userInteracted = false;
 
-// ════════════════════════════════════════════════════════
-//  MODAL
-// ════════════════════════════════════════════════════════
-function openModal(){
-  document.getElementById('modal').classList.remove('hidden');
-  setTimeout(()=>document.getElementById('cityInput').focus(),200);
+// ✅ FIX 1 : Détecter si l'utilisateur a interagi (nécessaire pour autoplay)
+document.addEventListener('touchstart', () => { userInteracted = true; }, { once: true });
+document.addEventListener('click',      () => { userInteracted = true; }, { once: true });
+
+// ════════════════════════════════════════════════
+// ✅ FIX 2 : localStorage — Sauvegarder la ville
+// ════════════════════════════════════════════════
+function saveState() {
+  try {
+    localStorage.setItem('salatuk_city',   JSON.stringify(currentCity));
+    localStorage.setItem('salatuk_method', selectedMethod);
+    localStorage.setItem('salatuk_adhan',  selectedAdhan);
+  } catch(e) {}
 }
-function closeModal(){ document.getElementById('modal').classList.add('hidden'); }
 
-// Method chips
-document.querySelectorAll('.method-chip').forEach(c=>{
-  c.addEventListener('click',()=>{
-    document.querySelectorAll('.method-chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
+function loadState() {
+  try {
+    const city = localStorage.getItem('salatuk_city');
+    if (city) currentCity = JSON.parse(city);
+    selectedMethod = localStorage.getItem('salatuk_method') || 'MWL';
+    selectedAdhan  = localStorage.getItem('salatuk_adhan')  || 'makkah';
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════
+function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+  // Pré-remplir si ville déjà connue
+  if (currentCity) document.getElementById('cityInput').value = `${currentCity.name}, ${currentCity.country}`;
+  setTimeout(() => document.getElementById('cityInput').focus(), 300);
+}
+function closeModal() { document.getElementById('modal').classList.add('hidden'); }
+
+// Chips méthode
+document.querySelectorAll('[data-m]').forEach(c => {
+  if (c.dataset.m === selectedMethod) { c.classList.add('active-m'); }
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-m]').forEach(x => x.classList.remove('active-m'));
+    c.classList.add('active-m');
     selectedMethod = c.dataset.m;
   });
 });
 
-// Adhan chips
-document.querySelectorAll('.adhan-chip').forEach(c=>{
-  c.addEventListener('click',()=>{
-    document.querySelectorAll('.adhan-chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
+// Chips Adhan
+document.querySelectorAll('[data-adhan]').forEach(c => {
+  if (c.dataset.adhan === selectedAdhan) c.classList.add('active-a');
+  c.addEventListener('click', () => {
+    document.querySelectorAll('[data-adhan]').forEach(x => x.classList.remove('active-a'));
+    c.classList.add('active-a');
     selectedAdhan = c.dataset.adhan;
   });
 });
 
-// ════════════════════════════════════════════════════════
-//  AUTOCOMPLETE VILLES
-// ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════
+// AUTOCOMPLETE
+// ════════════════════════════════════════════════
 const cityInput  = document.getElementById('cityInput');
 const suggestBox = document.getElementById('suggestions');
 const goBtn      = document.getElementById('goBtn');
 let searchTimer  = null;
 
-cityInput.addEventListener('input',()=>{
+cityInput.addEventListener('input', () => {
   const q = cityInput.value.trim();
   clearTimeout(searchTimer);
-  if(q.length < 2){ suggestBox.classList.add('hidden'); goBtn.disabled=true; currentCity=null; return; }
-  searchTimer = setTimeout(()=>searchCities(q), 350);
+  if (q.length < 2) { suggestBox.classList.add('hidden'); goBtn.disabled = true; return; }
+  searchTimer = setTimeout(() => searchCities(q), 380);
 });
 
-async function searchCities(q){
-  try{
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`;
-    const res  = await fetch(url,{headers:{'Accept-Language':'fr'}});
+async function searchCities(q) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`;
+    const res  = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
     const data = await res.json();
-    suggestBox.innerHTML='';
-    if(!data.length){ suggestBox.classList.add('hidden'); return; }
-    data.forEach(r=>{
-      const name    = r.address?.city||r.address?.town||r.address?.village||r.name;
-      const country = r.address?.country||'';
+    suggestBox.innerHTML = '';
+    if (!data.length) { suggestBox.classList.add('hidden'); return; }
+    data.forEach(r => {
+      const name    = r.address?.city || r.address?.town || r.address?.village || r.name;
+      const country = r.address?.country || '';
       const div = document.createElement('div');
-      div.className='suggestion-item';
-      div.innerHTML=`<span style="font-size:18px">📍</span><div><div class="city-name">${name}</div><div class="city-country">${country}</div></div>`;
-      div.addEventListener('click',()=>{
-        cityInput.value=`${name}, ${country}`;
+      div.className = 'suggestion-item';
+      div.innerHTML = `<span style="font-size:18px">📍</span><div><div class="city-name">${name}</div><div class="city-country">${country}</div></div>`;
+      div.addEventListener('click', () => {
+        cityInput.value = `${name}, ${country}`;
         suggestBox.classList.add('hidden');
-        goBtn.disabled=false;
-        currentCity={name,country,lat:parseFloat(r.lat),lon:parseFloat(r.lon)};
+        goBtn.disabled = false;
+        currentCity = { name, country, lat: parseFloat(r.lat), lon: parseFloat(r.lon) };
       });
       suggestBox.appendChild(div);
     });
     suggestBox.classList.remove('hidden');
-  }catch(e){ suggestBox.classList.add('hidden'); }
+  } catch(e) { suggestBox.classList.add('hidden'); }
 }
 
-cityInput.addEventListener('keydown',e=>{ if(e.key==='Enter'&&currentCity) loadPrayerTimes(); });
-goBtn.addEventListener('click',()=>{ if(currentCity) loadPrayerTimes(); });
+cityInput.addEventListener('keydown', e => { if (e.key === 'Enter' && currentCity) loadPrayerTimes(); });
+goBtn.addEventListener('click', () => { if (currentCity) loadPrayerTimes(); });
 
-// ════════════════════════════════════════════════════════
-//  CHARGEMENT HORAIRES
-// ════════════════════════════════════════════════════════
-async function loadPrayerTimes(){
-  if(!currentCity) return;
-  goBtn.disabled=true;
-  goBtn.innerHTML='<span class="spinner"></span>Calcul en cours…';
-  try{
+// ════════════════════════════════════════════════
+// CHARGEMENT HORAIRES — API Aladhan
+// ════════════════════════════════════════════════
+async function loadPrayerTimes() {
+  if (!currentCity) return;
+  goBtn.disabled = true;
+  goBtn.innerHTML = '<span class="spinner"></span>Calcul en cours…';
+  try {
     const now = new Date();
-    const url = `https://api.aladhan.com/v1/timings/${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}?latitude=${currentCity.lat}&longitude=${currentCity.lon}&method=${METHOD_MAP[selectedMethod]||2}`;
+    const methodCode = METHOD_MAP[selectedMethod] || 2;
+    const url = `https://api.aladhan.com/v1/timings/${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}?latitude=${currentCity.lat}&longitude=${currentCity.lon}&method=${methodCode}`;
     const res  = await fetch(url);
     const json = await res.json();
-    if(json.code!==200) throw new Error();
-    const t = json.data.timings;
-    currentTimes = { Fajr:t.Fajr, Dhuhr:t.Dhuhr, Asr:t.Asr, Maghrib:t.Maghrib, Isha:t.Isha };
+    if (json.code !== 200) throw new Error('API Aladhan erreur ' + json.code);
 
-    // Hijri
+    const t = json.data.timings;
+    currentTimes = {
+      Fajr: t.Fajr, Sunrise: t.Sunrise, Dhuhr: t.Dhuhr,
+      Asr:  t.Asr,  Maghrib: t.Maghrib, Isha:  t.Isha,
+    };
+
+    // Date hégirien
     const h = json.data.date.hijri;
-    document.getElementById('hijriDate').textContent=`${h.day} ${h.month.ar} ${h.year}`;
+    document.getElementById('hijriDate').textContent = `${h.day} ${h.month.ar} ${h.year}`;
 
     // Location bar
-    document.getElementById('locCity').textContent=`${currentCity.name}, ${currentCity.country}`;
-    document.getElementById('locMethod').textContent=`Méthode: ${selectedMethod} · Adhan: ${selectedAdhan==='off'?'désactivé':selectedAdhan}`;
+    document.getElementById('locCity').textContent = `${currentCity.name}, ${currentCity.country}`;
+    document.getElementById('locMeta').textContent = `Méthode: ${selectedMethod} · Adhan: ${selectedAdhan === 'off' ? 'désactivé' : selectedAdhan}`;
 
     // Adhan status
     const st = document.getElementById('adhanStatus');
-    if(selectedAdhan!=='off'){
-      st.style.display='flex';
-      document.getElementById('adhanStatusText').textContent=`Adhan ${selectedAdhan} activé — surveillance des prières`;
-    } else { st.style.display='none'; }
+    if (selectedAdhan !== 'off') {
+      st.classList.remove('hidden');
+      document.getElementById('adhanStatusText').textContent = `Adhan ${selectedAdhan} actif · prières surveillées`;
+    } else {
+      st.classList.add('hidden');
+    }
 
+    // ✅ FIX 8 : Calculer direction Qibla
+    calcQibla(currentCity.lat, currentCity.lon);
+
+    // ✅ FIX 5 : Charger météo + démarrer rafraîchissement auto
     fetchWeather(currentCity.lat, currentCity.lon, currentCity.name);
-    adhanFired = {}; // reset pour nouvelle ville
-    scheduleAdhanChecks();
+    if (weatherRefInt) clearInterval(weatherRefInt);
+    weatherRefInt = setInterval(() => fetchWeather(currentCity.lat, currentCity.lon, currentCity.name), 30 * 60 * 1000);
+
+    // ✅ FIX 2 : Sauvegarder
+    saveState();
+
+    // Adhan watchdog
+    adhanFired = {};
+    startAdhanWatch();
+
     closeModal();
-    goBtn.innerHTML='Afficher les horaires →';
-    goBtn.disabled=false;
-  }catch(e){
-    goBtn.innerHTML='❌ Erreur – réessayer';
-    setTimeout(()=>{ goBtn.innerHTML='Afficher les horaires →'; goBtn.disabled=false; },2000);
+    goBtn.innerHTML = 'Afficher les horaires →';
+    goBtn.disabled = false;
+    renderPrayers();
+
+  } catch(e) {
+    console.error(e);
+    goBtn.innerHTML = '❌ Erreur réseau – réessayer';
+    setTimeout(() => { goBtn.innerHTML = 'Afficher les horaires →'; goBtn.disabled = false; }, 2500);
   }
 }
 
-// ════════════════════════════════════════════════════════
-//  MÉTÉO — Open-Meteo (sans clé)
-// ════════════════════════════════════════════════════════
-async function fetchWeather(lat,lon,name){
-  try{
-    const r = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh`);
-    const d = await r.json();
-    const c = d.current;
-    document.getElementById('weatherCity').textContent=name;
-    document.getElementById('weatherTemp').textContent=Math.round(c.temperature_2m)+'°';
-    document.getElementById('weatherCond').textContent=WMO_TEXT[c.weather_code]||'Variable';
-    document.getElementById('weatherIcon').textContent=WMO_ICONS[c.weather_code]||'🌍';
-    document.getElementById('humidity').textContent=c.relative_humidity_2m+'%';
-    document.getElementById('wind').textContent=Math.round(c.wind_speed_10m)+' km/h';
-    document.getElementById('feelsLike').textContent=Math.round(c.apparent_temperature)+'°';
-  }catch(e){}
+// ════════════════════════════════════════════════
+// ✅ FIX 6 : MÉTÉO avec prévisions + UV + rafraîchissement
+// ════════════════════════════════════════════════
+async function fetchWeather(lat, lon, name) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,uv_index&hourly=temperature_2m,weather_code&wind_speed_unit=kmh&forecast_days=1`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const c    = data.current;
+
+    document.getElementById('weatherCity').textContent  = name;
+    document.getElementById('weatherTemp').textContent  = Math.round(c.temperature_2m) + '°';
+    document.getElementById('weatherCond').textContent  = WMO_TEXT[c.weather_code] || 'Variable';
+    document.getElementById('weatherIcon').textContent  = WMO_ICONS[c.weather_code] || '🌍';
+    document.getElementById('humidity').textContent     = c.relative_humidity_2m + '%';
+    document.getElementById('wind').textContent         = Math.round(c.wind_speed_10m) + ' km/h';
+    document.getElementById('feelsLike').textContent    = Math.round(c.apparent_temperature) + '°';
+    document.getElementById('uvIndex').textContent      = Math.round(c.uv_index ?? 0);
+
+    // Prévisions horaires (prochaines 8 heures)
+    const nowH = new Date().getHours();
+    const frow = document.getElementById('forecastRow');
+    frow.innerHTML = '';
+    const times = data.hourly.time;
+    const temps  = data.hourly.temperature_2m;
+    const codes  = data.hourly.weather_code;
+    for (let i = nowH + 1; i <= Math.min(nowH + 8, 23); i++) {
+      const item = document.createElement('div');
+      item.className = 'forecast-item';
+      item.innerHTML = `<div class="f-hour">${String(i).padStart(2,'0')}h</div><div class="f-icon">${WMO_ICONS[codes[i]]||'🌍'}</div><div class="f-temp">${Math.round(temps[i])}°</div>`;
+      frow.appendChild(item);
+    }
+
+    const now = new Date();
+    document.getElementById('weatherUpdated').textContent = `Mis à jour ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  } catch(e) {
+    document.getElementById('weatherCond').textContent = 'Météo indisponible';
+  }
 }
 
-// ════════════════════════════════════════════════════════
-//  ADHAN — SURVEILLANCE & DÉCLENCHEMENT
-// ════════════════════════════════════════════════════════
-function timeToMin(t){
-  if(!t) return -1;
-  const clean = t.replace(/\s*(AM|PM).*/i,'').trim();
-  const [h,m] = clean.split(':').map(Number);
-  return h*60+m;
+// ════════════════════════════════════════════════
+// ✅ FIX 8 : QIBLA — Direction de La Mecque
+// ════════════════════════════════════════════════
+function calcQibla(lat, lon) {
+  const MAKKAH_LAT = 21.4225, MAKKAH_LON = 39.8262;
+  const φ1 = lat * Math.PI / 180;
+  const φ2 = MAKKAH_LAT * Math.PI / 180;
+  const Δλ = (MAKKAH_LON - lon) * Math.PI / 180;
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  let bearing = Math.atan2(y, x) * 180 / Math.PI;
+  bearing = ((bearing % 360) + 360) % 360;
+  const dir = bearing < 22.5?'N':bearing<67.5?'NE':bearing<112.5?'E':bearing<157.5?'SE':bearing<202.5?'S':bearing<247.5?'SO':bearing<292.5?'O':'NO';
+
+  document.getElementById('qiblaCard').style.display = 'flex';
+  document.getElementById('qiblaValue').textContent = `${Math.round(bearing)}° ${dir} — vers La Mecque 🕋`;
+  document.getElementById('qiblaCompass').style.transform = `rotate(${bearing}deg)`;
 }
 
-function todayKey(){ return new Date().toISOString().slice(0,10); }
-
-function scheduleAdhanChecks(){
-  // Vérifie chaque 10 secondes si c'est l'heure d'une prière
-  if(adhanTimeout) clearInterval(adhanTimeout);
-  adhanTimeout = setInterval(checkAdhan, 10000);
-  checkAdhan(); // immédiat
+// ════════════════════════════════════════════════
+// ✅ FIX 1 & 3 : ADHAN — Surveillance robuste
+// ════════════════════════════════════════════════
+function timeToMin(t) {
+  if (!t) return -1;
+  const clean = t.replace(/\s*(AM|PM).*/i, '').trim();
+  const [h, m] = clean.split(':').map(Number);
+  return h * 60 + m;
 }
 
-function checkAdhan(){
-  if(!Object.keys(currentTimes).length) return;
-  if(selectedAdhan==='off') return;
+function todayKey() { return new Date().toISOString().slice(0, 10); }
+
+function startAdhanWatch() {
+  if (adhanCheckInt) clearInterval(adhanCheckInt);
+  // ✅ FIX 3 : Vérification toutes les 5 secondes (plus réactif)
+  adhanCheckInt = setInterval(checkAdhan, 5000);
+  checkAdhan();
+}
+
+function checkAdhan() {
+  if (!Object.keys(currentTimes).length) return;
+  if (selectedAdhan === 'off') return;
   const now = new Date();
   const h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
   const key = todayKey();
 
-  PRAYER_META.forEach(p=>{
+  PRAYER_META.filter(p => !p.isSunrise).forEach(p => {
     const fireKey = `${p.key}-${key}`;
-    if(adhanFired[fireKey]) return;
+    if (adhanFired[fireKey]) return;
     const pTime = currentTimes[p.key];
-    if(!pTime) return;
-    const [ph, pm] = pTime.replace(/\s*(AM|PM).*/i,'').trim().split(':').map(Number);
-    // Déclencher si heure et minute correspondent (dans les 30 premières secondes)
-    if(h===ph && m===pm && s<30){
+    if (!pTime) return;
+    const [ph, pm] = pTime.replace(/\s*(AM|PM).*/i, '').trim().split(':').map(Number);
+    if (h === ph && m === pm && s < 30) {
       adhanFired[fireKey] = true;
-      triggerAdhan(p);
+      // ✅ FIX 9 : Fajr utilise l'adhan spécial si sélectionné 'fajr', sinon adhan normal
+      const adhanToPlay = (p.isFajr && selectedAdhan === 'fajr') ? 'fajr' : selectedAdhan;
+      triggerAdhan(p, pTime, adhanToPlay);
     }
   });
 }
 
-function triggerAdhan(prayer){
-  // Afficher bannière
-  document.getElementById('adhanBannerIcon').textContent = prayer.icon;
-  document.getElementById('adhanPrayerName').textContent = prayer.key;
-  document.getElementById('adhanPrayerAr').textContent   = prayer.nameAr;
+function triggerAdhan(prayer, time, adhanType) {
+  document.getElementById('adhanBannerIcon').textContent  = prayer.icon;
+  document.getElementById('adhanPrayerName').textContent  = prayer.key;
+  document.getElementById('adhanPrayerAr').textContent    = prayer.nameAr;
+  document.getElementById('adhanPrayerTime').textContent  = time;
   document.getElementById('adhanBanner').classList.add('visible');
-
-  // Lancer l'audio
-  playAdhan();
-
-  // Vibration (mobile)
-  if(navigator.vibrate) navigator.vibrate([500,300,500,300,500]);
+  if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200, 600]);
+  playAdhan(adhanType);
 }
 
-function playAdhan(){
-  const url = ADHAN_URLS[selectedAdhan];
-  if(!url) return;
-  if(adhanAudio){ adhanAudio.pause(); adhanAudio=null; }
+function playAdhan(adhanType) {
+  const type = adhanType || selectedAdhan;
+  const url  = ADHAN_URLS[type];
+  if (!url) return;
+  if (adhanAudio) { adhanAudio.pause(); adhanAudio = null; }
   adhanAudio = new Audio(url);
   adhanAudio.volume = 1.0;
-  // Certains navigateurs bloquent l'autoplay sans interaction utilisateur préalable
-  adhanAudio.play().catch(()=>{
-    // Si bloqué, montrer un bouton dans la bannière
-    const btn = document.createElement('button');
-    btn.textContent='▶ Écouter l\'Adhan';
-    btn.style.cssText='margin-top:8px;background:var(--gold);color:#000;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px;';
-    btn.onclick=()=>{ adhanAudio.play(); btn.remove(); };
-    document.getElementById('adhanPrayerAr').after(btn);
+
+  const playBtn = document.getElementById('adhanPlayBtn');
+  playBtn.classList.remove('visible');
+
+  // ✅ FIX 1 : Essayer autoplay, afficher bouton si bloqué
+  adhanAudio.play().then(() => {
+    playBtn.classList.remove('visible');
+  }).catch(() => {
+    // Autoplay bloqué → afficher bouton
+    playBtn.classList.add('visible');
+    playBtn._adhanType = type;
   });
 }
 
-function dismissAdhan(){
-  document.getElementById('adhanBanner').classList.remove('visible');
-  if(adhanAudio){ adhanAudio.pause(); adhanAudio.currentTime=0; }
+function forcePlayAdhan() {
+  const playBtn = document.getElementById('adhanPlayBtn');
+  const type = playBtn._adhanType || selectedAdhan;
+  const url  = ADHAN_URLS[type];
+  if (!url || !adhanAudio) {
+    adhanAudio = new Audio(url);
+    adhanAudio.volume = 1.0;
+  }
+  adhanAudio.play();
+  playBtn.classList.remove('visible');
 }
 
-// ════════════════════════════════════════════════════════
-//  RENDU PRIÈRES
-// ════════════════════════════════════════════════════════
-function renderPrayers(){
-  const list = document.getElementById('prayerList');
-  if(!Object.keys(currentTimes).length) return;
-  list.innerHTML='';
-  const now = new Date();
-  const nowMin = now.getHours()*60+now.getMinutes();
-  let activeIdx=-1;
+function dismissAdhan() {
+  document.getElementById('adhanBanner').classList.remove('visible');
+  if (adhanAudio) { adhanAudio.pause(); adhanAudio.currentTime = 0; }
+}
 
-  for(let i=0;i<PRAYER_META.length;i++){
-    const start = timeToMin(currentTimes[PRAYER_META[i].key]);
-    const end   = i+1<PRAYER_META.length ? timeToMin(currentTimes[PRAYER_META[i+1].key]) : 1440;
-    if(nowMin>=start && nowMin<end) activeIdx=i;
+// ════════════════════════════════════════════════
+// ✅ FIX 3 & 4 : PRIÈRES avec Shurouq + fuseau correct
+// ════════════════════════════════════════════════
+function renderPrayers() {
+  const list = document.getElementById('prayerList');
+  if (!Object.keys(currentTimes).length) return;
+  list.innerHTML = '';
+
+  const now    = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // Déterminer prière active (parmi les 5 salats, pas Sunrise)
+  const salats = PRAYER_META.filter(p => !p.isSunrise);
+  let activeIdx = -1;
+  for (let i = 0; i < salats.length; i++) {
+    const start = timeToMin(currentTimes[salats[i].key]);
+    const end   = i + 1 < salats.length ? timeToMin(currentTimes[salats[i+1].key]) : 1440;
+    if (nowMin >= start && nowMin < end) activeIdx = i;
   }
 
-  PRAYER_META.forEach((p,i)=>{
+  PRAYER_META.forEach((p, idx) => {
     const pMin  = timeToMin(currentTimes[p.key]);
-    const passed = nowMin>pMin && i!==activeIdx;
-    const active = i===activeIdx;
+    const salatIdx = salats.findIndex(s => s.key === p.key);
+    const active = salatIdx === activeIdx && !p.isSunrise;
+    const passed = !active && nowMin > pMin;
+
     const div = document.createElement('div');
-    div.className='prayer-item'+(active?' active':'')+(passed?' passed':'');
-    div.innerHTML=`
+    div.className = 'prayer-item' + (active ? ' active' : '') + (passed ? ' passed' : '') + (p.isSunrise ? ' sunrise-item' : '');
+    div.innerHTML = `
       <div class="p-left">
         <div class="p-icon">${p.icon}</div>
         <div>
-          <div class="p-name">${p.key}${active?'<span class="active-badge">En cours</span>':''}</div>
-          <div class="p-name-ar">${p.nameAr}</div>
+          <div class="p-name">${p.key}${active ? '<span class="active-badge">En cours</span>' : ''}</div>
+          <div class="p-name-ar">${p.nameAr}${p.isFajr && selectedAdhan === 'fajr' ? ' <small style="color:var(--gold);font-size:10px">الصلاة خير من النوم</small>' : ''}</div>
         </div>
       </div>
-      <div class="p-time">${currentTimes[p.key]||'—'}</div>`;
+      <div class="p-time">${currentTimes[p.key] || '—'}</div>`;
     list.appendChild(div);
   });
 
   // Countdown
-  const upcoming = PRAYER_META.filter(p=>timeToMin(currentTimes[p.key])>nowMin);
-  const next = upcoming[0]||PRAYER_META[0];
-  let diff = timeToMin(currentTimes[next.key])-nowMin;
-  if(diff<0) diff+=1440;
-  const hh=Math.floor(diff/60), mm=diff%60;
-  document.getElementById('nextName').textContent=`${next.key} · ${next.nameAr}`;
-  document.getElementById('countdown').textContent=hh>0?`${hh}h ${String(mm).padStart(2,'0')}min`:`${mm} min`;
+  const upcoming = salats.filter(p => timeToMin(currentTimes[p.key]) > nowMin);
+  const next = upcoming[0] || salats[0];
+  if (next) {
+    let diff = timeToMin(currentTimes[next.key]) - nowMin;
+    if (diff < 0) diff += 1440;
+    const hh = Math.floor(diff / 60), mm = diff % 60;
+    document.getElementById('nextName').textContent  = `${next.key} · ${next.nameAr}`;
+    document.getElementById('countdown').textContent = hh > 0 ? `${hh}h ${String(mm).padStart(2,'0')}` : `${mm} min`;
+  }
 }
 
-// ════════════════════════════════════════════════════════
-//  HORLOGE
-// ════════════════════════════════════════════════════════
-function updateClock(){
-  const now=new Date();
-  const h=String(now.getHours()).padStart(2,'0');
-  const m=String(now.getMinutes()).padStart(2,'0');
-  const s=String(now.getSeconds()).padStart(2,'0');
-  document.getElementById('clock').innerHTML=`${h}<span>:</span>${m}`;
-  document.getElementById('clockSub').textContent=`${s}s`;
-  const days=['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
-  const months=['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
-  document.getElementById('gregDate').textContent=`${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-  if(Object.keys(currentTimes).length) renderPrayers();
+// ════════════════════════════════════════════════
+// HORLOGE
+// ════════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
+  document.getElementById('clock').innerHTML    = `${h}<span>:</span>${m}`;
+  document.getElementById('clockSub').textContent = `${s}s`;
+  const days   = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+  const months = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+  document.getElementById('gregDate').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  if (Object.keys(currentTimes).length) renderPrayers();
 }
 updateClock();
-setInterval(updateClock,1000);
+setInterval(updateClock, 1000);
 
-// ════════════════════════════════════════════════════════
-//  GÉOLOC AUTO
-// ════════════════════════════════════════════════════════
-if(navigator.geolocation){
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    try{
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`,{headers:{'Accept-Language':'fr'}});
-      const d = await r.json();
-      const name=d.address?.city||d.address?.town||d.address?.village||'Ma ville';
-      const country=d.address?.country||'';
-      currentCity={name,country,lat:pos.coords.latitude,lon:pos.coords.longitude};
-      document.getElementById('cityInput').value=`${name}, ${country}`;
-      goBtn.disabled=false;
-    }catch(e){}
-  },()=>{});
+// ════════════════════════════════════════════════
+// ✅ FIX 2 : RESTAURER depuis localStorage au démarrage
+// ════════════════════════════════════════════════
+async function restoreOrGeolocate() {
+  loadState();
+  // Rétablir chips UI
+  document.querySelectorAll('[data-m]').forEach(c => {
+    c.classList.toggle('active-m', c.dataset.m === selectedMethod);
+  });
+  document.querySelectorAll('[data-adhan]').forEach(c => {
+    c.classList.toggle('active-a', c.dataset.adhan === selectedAdhan);
+  });
+
+  if (currentCity) {
+    // ✅ Ville sauvegardée → charger directement
+    document.getElementById('locCity').textContent = `${currentCity.name}, ${currentCity.country}`;
+    await loadPrayerTimes();
+    return;
+  }
+
+  // Sinon géolocalisation
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async pos => {
+      try {
+        const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`, { headers: { 'Accept-Language': 'fr' } });
+        const d = await r.json();
+        const name    = d.address?.city || d.address?.town || d.address?.village || 'Ma ville';
+        const country = d.address?.country || '';
+        currentCity   = { name, country, lat: pos.coords.latitude, lon: pos.coords.longitude };
+        document.getElementById('cityInput').value = `${name}, ${country}`;
+        goBtn.disabled = false;
+        // Charger automatiquement
+        await loadPrayerTimes();
+      } catch(e) { openModal(); }
+    }, () => openModal());
+  } else {
+    openModal();
+  }
 }
+
+// ✅ FIX 7 : PWA — Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// Démarrage
+restoreOrGeolocate();
 </script>
 </body>
 </html>
