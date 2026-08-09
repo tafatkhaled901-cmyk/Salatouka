@@ -405,13 +405,12 @@ const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
 
 const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:21 };
 
-// ✅ FIX 1 : URLs Adhan depuis Islamic Network CDN (fiables, CORS ok)
+// ✅ Adhan — fichiers locaux hébergés dans le dépôt GitHub (fiables, aucun CORS)
 const ADHAN_URLS = {
-  makkah:  'https://islamicfinder.org/prayer-times/images/azan/azan_makkah.mp3',
-  madinah: 'https://islamicfinder.org/prayer-times/images/azan/azan_madina.mp3',
-  egypt:   'https://islamicfinder.org/prayer-times/images/azan/azan_egypt.mp3',
-  // ✅ FIX 9 : Adhan Fajr avec "الصلاة خير من النوم"
-  fajr:    'https://islamicfinder.org/prayer-times/images/azan/azan_subh.mp3',
+  makkah:  './adhan-makkah.wav',
+  madinah: './adhan-madinah.wav',
+  egypt:   './adhan-egypt.wav',
+  fajr:    './adhan-fajr.wav',
   off:     null,
 };
 
