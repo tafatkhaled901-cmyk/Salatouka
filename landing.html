@@ -137,6 +137,55 @@ body{
 }
 .btn-cta-icon{font-size:22px;}
 
+/* ══ GUIDE INSTALLATION ══ */
+.install-guide{
+  width:100%;max-width:380px;
+  margin-top:20px;
+  display:flex;flex-direction:column;gap:12px;
+}
+.ig-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:16px 18px;
+  text-align:left;
+}
+.ig-header{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.ig-os-icon{font-size:28px;}
+.ig-os{font-size:15px;font-weight:600;color:var(--text);}
+.ig-os-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.ig-steps{display:flex;flex-direction:column;gap:10px;}
+.ig-step{
+  display:flex;align-items:flex-start;gap:10px;
+  font-size:13px;color:var(--muted);line-height:1.4;
+}
+.ig-step strong{color:var(--text);}
+.ig-num{
+  width:22px;height:22px;border-radius:50%;
+  background:rgba(201,168,76,0.12);
+  border:1px solid var(--gold);
+  color:var(--gold);font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+}
+.ig-separator{
+  text-align:center;
+  font-size:11px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;
+}
+.ig-result{
+  background:rgba(201,168,76,0.06);
+  border:1px solid rgba(201,168,76,0.2);
+  border-radius:12px;padding:12px 16px;
+  font-size:12px;color:var(--muted);
+  text-align:center;line-height:1.6;
+}
+
 /* Bouton télécharger PWA */
 .btn-install{
   display:none; /* caché par défaut, affiché par JS */
@@ -491,32 +540,71 @@ footer{
     Ouvrir l'application
   </a>
 
-  <!-- Bouton installer PWA (Android Chrome) -->
-  <button class="btn-install fade-in" id="installBtn" onclick="installApp()">
-    <div class="btn-install-icon">🕌</div>
-    <div class="btn-install-text">
-      <div class="bit">Installer gratuitement</div>
-      <div class="biv">📲 Télécharger l'application</div>
-    </div>
-  </button>
+  <!-- Guide installation toujours visible -->
+  <div class="install-guide fade-in" id="installGuide">
 
-  <!-- Guide iOS -->
-  <div class="ios-guide fade-in" id="iosGuide">
-    <div class="ios-guide-title">📱 Installer sur iPhone</div>
-    <div class="ios-step">
-      <div class="ios-step-num">1</div>
-      <span>Appuie sur <strong style="color:var(--text)">🔗 Ouvrir l'application</strong> ci-dessus</span>
+    <!-- ANDROID -->
+    <div class="ig-card" id="igAndroid">
+      <div class="ig-header">
+        <span class="ig-os-icon">🤖</span>
+        <div>
+          <div class="ig-os">Android</div>
+          <div class="ig-os-sub">Samsung · Xiaomi · Huawei · Oppo…</div>
+        </div>
+      </div>
+      <div class="ig-steps">
+        <div class="ig-step">
+          <div class="ig-num">1</div>
+          <div class="ig-text">Appuie sur <strong>🕌 Ouvrir l'application</strong> ci-dessus</div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">2</div>
+          <div class="ig-text">Appuie sur les <strong>3 points ⋮</strong> en haut à droite de Chrome</div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">3</div>
+          <div class="ig-text">Appuie sur <strong>"Ajouter à l'écran d'accueil"</strong></div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">4</div>
+          <div class="ig-text">Appuie sur <strong style="color:var(--gold)">Ajouter</strong> → L'icône 🕌 apparaît !</div>
+        </div>
+      </div>
     </div>
-    <div class="ios-step">
-      <div class="ios-step-num">2</div>
-      <span>Appuie sur l'icône <strong style="color:var(--text)">Partager</strong> en bas de Safari <strong style="color:var(--gold)">⎙</strong></span>
+
+    <div class="ig-separator">ou</div>
+
+    <!-- IPHONE -->
+    <div class="ig-card" id="igIphone">
+      <div class="ig-header">
+        <span class="ig-os-icon">🍎</span>
+        <div>
+          <div class="ig-os">iPhone</div>
+          <div class="ig-os-sub">Ouvrir avec Safari uniquement</div>
+        </div>
+      </div>
+      <div class="ig-steps">
+        <div class="ig-step">
+          <div class="ig-num">1</div>
+          <div class="ig-text">Appuie sur <strong>🕌 Ouvrir l'application</strong> ci-dessus</div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">2</div>
+          <div class="ig-text">Appuie sur l'icône <strong>Partager</strong> en bas de l'écran <strong style="color:var(--gold)">⎙</strong></div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">3</div>
+          <div class="ig-text">Fais défiler et appuie <strong>"Sur l'écran d'accueil"</strong></div>
+        </div>
+        <div class="ig-step">
+          <div class="ig-num">4</div>
+          <div class="ig-text">Appuie sur <strong style="color:var(--gold)">Ajouter</strong> → L'icône 🕌 apparaît !</div>
+        </div>
+      </div>
     </div>
-    <div class="ios-step">
-      <div class="ios-step-num">3</div>
-      <span>Appuie sur <strong style="color:var(--text)">"Sur l'écran d'accueil"</strong> puis <strong style="color:var(--gold)">Ajouter</strong></span>
-    </div>
-    <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">
-      L'icône صلاتك apparaîtra sur ton écran 🕌
+
+    <div class="ig-result">
+      🕌 L'icône <strong style="color:var(--gold)">صلاتك</strong> apparaîtra sur ton écran d'accueil comme une vraie application
     </div>
   </div>
 
