@@ -67,11 +67,54 @@
     .adhan-play-btn{background:var(--gold);border:none;color:#0a0f1e;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:none;}
     .adhan-play-btn.visible{display:block;}
 
-    /* ══ QIBLA BADGE ══ */
-    .qibla-card{width:calc(100% - 48px);max-width:432px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;}
-    .qibla-compass{font-size:32px;transition:transform 1s ease;}
-    .qibla-info .ql{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
-    .qibla-info .qv{font-size:16px;font-weight:600;color:var(--gold-soft);}
+    /* ══ QIBLA BOUTON ══ */
+    .qibla-btn-wrap{width:calc(100% - 48px);max-width:432px;margin-bottom:16px;}
+    .qibla-btn{width:100%;background:linear-gradient(135deg,#0d1f3c,#112240);border:1px solid var(--gold);border-radius:18px;padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .25s;-webkit-tap-highlight-color:transparent;}
+    .qibla-btn:active{transform:scale(0.98);border-color:var(--gold-soft);}
+    .qibla-btn-icon{font-size:32px;}
+    .qibla-btn-text .qt{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
+    .qibla-btn-text .qv{font-size:15px;font-weight:600;color:var(--gold-soft);margin-top:3px;}
+    .qibla-btn-arrow{margin-left:auto;color:var(--gold);font-size:20px;}
+
+    /* ══ QIBLA MODAL ══ */
+    .qibla-modal{position:fixed;inset:0;background:rgba(5,8,20,0.97);z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(16px);}
+    .qibla-modal.hidden{display:none;}
+    .qibla-modal-header{width:100%;max-width:400px;display:flex;align-items:center;justify-content:space-between;padding:0 24px 24px;}
+    .qibla-modal-title{font-family:'Amiri',serif;font-size:22px;color:var(--gold);}
+    .qibla-modal-close{background:rgba(255,255,255,0.08);border:none;color:var(--text);border-radius:50%;width:38px;height:38px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+    /* Boussole SVG container */
+    .compass-wrap{position:relative;width:280px;height:280px;margin-bottom:28px;}
+    .compass-bg{width:280px;height:280px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#1a2744,#0a0f1e);border:2px solid var(--border);box-shadow:0 0 60px rgba(201,168,76,0.15),inset 0 0 30px rgba(0,0,0,0.5);}
+    /* Anneau doré externe */
+    .compass-ring{position:absolute;inset:-6px;border-radius:50%;border:3px solid var(--gold);opacity:0.4;}
+    .compass-ring2{position:absolute;inset:-12px;border-radius:50%;border:1px solid var(--gold);opacity:0.15;}
+    /* Rose des vents (SVG inline dans le canvas) */
+    .compass-canvas{position:absolute;inset:0;border-radius:50%;}
+    /* Aiguille vers La Mecque */
+    .compass-needle-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform 1.2s cubic-bezier(.34,1.26,.64,1);}
+    .compass-needle{width:6px;height:120px;position:relative;display:flex;flex-direction:column;align-items:center;}
+    .needle-north{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:70px solid #ef4444;filter:drop-shadow(0 0 6px rgba(239,68,68,0.8));}
+    .needle-south{width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:50px solid #94a3b8;}
+    .needle-dot{width:14px;height:14px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+    /* Aiguille Qibla (dorée) */
+    .compass-qibla-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:transform 1.4s cubic-bezier(.34,1.26,.64,1);}
+    .compass-qibla-needle{width:4px;height:110px;position:relative;display:flex;flex-direction:column;align-items:center;}
+    .qibla-tip{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:65px solid var(--gold);filter:drop-shadow(0 0 8px rgba(201,168,76,0.9));}
+    .qibla-kaaba{font-size:16px;margin-top:2px;}
+
+    /* Info sous la boussole */
+    .qibla-info-box{text-align:center;}
+    .qi-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+    .qi-deg{font-size:42px;font-weight:300;color:var(--gold-soft);letter-spacing:2px;}
+    .qi-dir{font-size:14px;color:var(--muted);margin-top:4px;}
+    .qi-ar{font-family:'Amiri',serif;font-size:18px;color:var(--gold);margin-top:6px;}
+    .qi-dist{font-size:12px;color:var(--muted);margin-top:4px;}
+
+    /* Statut capteur */
+    .sensor-status{font-size:11px;color:var(--muted);margin-top:16px;text-align:center;padding:0 24px;}
+    .sensor-ok{color:var(--green-soft);}
+    .sensor-warn{color:#fbbf24;}
 
     /* ══ MAIN APP ══ */
     header{width:100%;max-width:480px;padding:28px 24px 0;display:flex;justify-content:space-between;align-items:flex-start;}
@@ -262,15 +305,66 @@
   <div class="weather-updated" id="weatherUpdated"></div>
 </div>
 
-<!-- ✅ FIX 8 : Qibla direction -->
-<div class="section-header">
-  <div class="section-title">Qibla</div><div class="section-line"></div>
+<!-- ══ QIBLA MODAL BOUSSOLE ══ -->
+<div class="qibla-modal hidden" id="qiblaModal">
+  <div class="qibla-modal-header">
+    <div class="qibla-modal-title">🕋 اتجاه القبلة</div>
+    <button class="qibla-modal-close" onclick="closeQibla()">✕</button>
+  </div>
+
+  <!-- BOUSSOLE -->
+  <div class="compass-wrap">
+    <div class="compass-bg"></div>
+    <div class="compass-ring"></div>
+    <div class="compass-ring2"></div>
+
+    <!-- Canvas SVG pour la rose des vents -->
+    <canvas class="compass-canvas" id="compassCanvas" width="280" height="280"></canvas>
+
+    <!-- Aiguille Nord/Sud (rouge/gris) -->
+    <div class="compass-needle-wrap" id="compassNeedle">
+      <div class="compass-needle">
+        <div class="needle-north"></div>
+        <div class="needle-south"></div>
+      </div>
+      <div class="needle-dot"></div>
+    </div>
+
+    <!-- Aiguille Qibla (dorée) -->
+    <div class="compass-qibla-wrap" id="qiblaNeedle">
+      <div class="compass-qibla-needle">
+        <div class="qibla-tip"></div>
+        <div class="qibla-kaaba">🕋</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info -->
+  <div class="qibla-info-box">
+    <div class="qi-label">Direction de La Mecque</div>
+    <div class="qi-deg" id="qiDeg">—°</div>
+    <div class="qi-dir" id="qiDir">—</div>
+    <div class="qi-ar">اتجه نحو الكعبة المشرفة</div>
+    <div class="qi-dist" id="qiDist">—</div>
+  </div>
+
+  <div class="sensor-status" id="sensorStatus">
+    <span class="sensor-warn">⚠️ Calibrez votre téléphone en faisant un 8 dans l'air</span>
+  </div>
 </div>
-<div class="qibla-card" id="qiblaCard" style="display:none">
-  <div class="qibla-compass" id="qiblaCompass">🧭</div>
-  <div class="qibla-info">
-    <div class="ql">Direction de La Mecque</div>
-    <div class="qv" id="qiblaValue">— °</div>
+
+<!-- ✅ Bouton Qibla -->
+<div class="section-header">
+  <div class="section-title">Qibla · القبلة</div><div class="section-line"></div>
+</div>
+<div class="qibla-btn-wrap">
+  <div class="qibla-btn" id="qiblaBtn" onclick="openQibla()">
+    <div class="qibla-btn-icon">🧭</div>
+    <div class="qibla-btn-text">
+      <div class="qt">Boussole Qibla</div>
+      <div class="qv" id="qiblaBtnValue">Appuyez pour trouver La Mecque</div>
+    </div>
+    <div class="qibla-btn-arrow">›</div>
   </div>
 </div>
 
@@ -541,22 +635,213 @@ async function fetchWeather(lat, lon, name) {
 }
 
 // ════════════════════════════════════════════════
-// ✅ FIX 8 : QIBLA — Direction de La Mecque
+// QIBLA — BOUSSOLE INTERACTIVE COMPLÈTE
 // ════════════════════════════════════════════════
+const MAKKAH_LAT = 21.4225, MAKKAH_LON = 39.8262;
+let qiblaBearing  = null;   // degrés depuis le Nord (géographique)
+let deviceHeading = null;   // cap du téléphone (depuis le capteur)
+let compassActive = false;
+let orientHandler = null;
+
+// ── Calcul bearing vers La Mecque ────────────────
 function calcQibla(lat, lon) {
-  const MAKKAH_LAT = 21.4225, MAKKAH_LON = 39.8262;
   const φ1 = lat * Math.PI / 180;
   const φ2 = MAKKAH_LAT * Math.PI / 180;
   const Δλ = (MAKKAH_LON - lon) * Math.PI / 180;
   const y = Math.sin(Δλ) * Math.cos(φ2);
   const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
-  let bearing = Math.atan2(y, x) * 180 / Math.PI;
-  bearing = ((bearing % 360) + 360) % 360;
-  const dir = bearing < 22.5?'N':bearing<67.5?'NE':bearing<112.5?'E':bearing<157.5?'SE':bearing<202.5?'S':bearing<247.5?'SO':bearing<292.5?'O':'NO';
+  let b = Math.atan2(y, x) * 180 / Math.PI;
+  qiblaBearing = ((b % 360) + 360) % 360;
 
-  document.getElementById('qiblaCard').style.display = 'flex';
-  document.getElementById('qiblaValue').textContent = `${Math.round(bearing)}° ${dir} — vers La Mecque 🕋`;
-  document.getElementById('qiblaCompass').style.transform = `rotate(${bearing}deg)`;
+  // Distance vers La Mecque (formule haversine)
+  const R  = 6371;
+  const dφ = (MAKKAH_LAT - lat) * Math.PI / 180;
+  const dλ = (MAKKAH_LON - lon) * Math.PI / 180;
+  const a  = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  // Mettre à jour le bouton
+  const dir = bearingToDir(qiblaBearing);
+  document.getElementById('qiblaBtnValue').textContent =
+    `${Math.round(qiblaBearing)}° ${dir} · ${Math.round(dist).toLocaleString()} km`;
+
+  // Mettre à jour la modal si ouverte
+  updateQiblaDisplay();
+}
+
+function bearingToDir(b) {
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  return dirs[Math.round(b / 45) % 8];
+}
+
+// ── Ouvrir la boussole ───────────────────────────
+function openQibla() {
+  if (!currentCity) {
+    alert('Veuillez d\'abord choisir votre ville.');
+    return;
+  }
+  document.getElementById('qiblaModal').classList.remove('hidden');
+  drawCompassRose();
+  updateQiblaDisplay();
+  startCompassSensor();
+  compassActive = true;
+}
+
+function closeQibla() {
+  document.getElementById('qiblaModal').classList.add('hidden');
+  stopCompassSensor();
+  compassActive = false;
+}
+
+// ── Dessin de la rose des vents sur canvas ───────
+function drawCompassRose() {
+  const canvas = document.getElementById('compassCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2, r = w/2 - 10;
+  ctx.clearRect(0, 0, w, h);
+
+  // Points cardinaux
+  const cardinals = [
+    { label:'N', angle:0,   color:'#ef4444', bold:true },
+    { label:'NE',angle:45,  color:'#8899bb', bold:false },
+    { label:'E', angle:90,  color:'#8899bb', bold:true },
+    { label:'SE',angle:135, color:'#8899bb', bold:false },
+    { label:'S', angle:180, color:'#8899bb', bold:true },
+    { label:'SO',angle:225, color:'#8899bb', bold:false },
+    { label:'O', angle:270, color:'#8899bb', bold:true },
+    { label:'NO',angle:315, color:'#8899bb', bold:false },
+  ];
+
+  // Graduations (360 traits)
+  for (let i = 0; i < 360; i++) {
+    const rad  = i * Math.PI / 180;
+    const isMaj = i % 10 === 0;
+    const is5  = i % 5 === 0;
+    if (!is5) continue;
+    const len  = isMaj ? 14 : 8;
+    const x1   = cx + (r - len) * Math.sin(rad);
+    const y1   = cy - (r - len) * Math.cos(rad);
+    const x2   = cx + r * Math.sin(rad);
+    const y2   = cy - r * Math.cos(rad);
+    ctx.beginPath();
+    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+    ctx.strokeStyle = isMaj ? '#2a3a5a' : '#1a2744';
+    ctx.lineWidth   = isMaj ? 1.5 : 1;
+    ctx.stroke();
+  }
+
+  // Cercles concentriques
+  [0.3, 0.6].forEach(f => {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * f, 0, Math.PI*2);
+    ctx.strokeStyle = '#1a2744';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // Labels cardinaux
+  cardinals.forEach(c => {
+    const rad  = c.angle * Math.PI / 180;
+    const dist = r - 22;
+    const x    = cx + dist * Math.sin(rad);
+    const y    = cy - dist * Math.cos(rad);
+    ctx.font      = c.bold ? 'bold 13px Inter, sans-serif' : '11px Inter, sans-serif';
+    ctx.fillStyle = c.color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(c.label, x, y);
+  });
+
+  // Degrés (0, 90, 180, 270)
+  [0,90,180,270].forEach(deg => {
+    const rad  = deg * Math.PI / 180;
+    const dist = r - 38;
+    const x    = cx + dist * Math.sin(rad);
+    const y    = cy - dist * Math.cos(rad);
+    ctx.font      = '9px Inter, sans-serif';
+    ctx.fillStyle = '#3a4a6a';
+    ctx.fillText(deg + '°', x, y);
+  });
+}
+
+// ── Mise à jour affichage (degrés, direction, dist) ──
+function updateQiblaDisplay() {
+  if (qiblaBearing === null) return;
+  const dir  = bearingToDir(qiblaBearing);
+  document.getElementById('qiDeg').textContent  = Math.round(qiblaBearing) + '°';
+  document.getElementById('qiDir').textContent  = `Direction : ${dir} (${Math.round(qiblaBearing)}° depuis le Nord)`;
+
+  if (currentCity) {
+    const φ1 = currentCity.lat * Math.PI / 180;
+    const φ2 = MAKKAH_LAT * Math.PI / 180;
+    const dφ = (MAKKAH_LAT - currentCity.lat) * Math.PI / 180;
+    const dλ = (MAKKAH_LON - currentCity.lon) * Math.PI / 180;
+    const a  = Math.sin(dφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(dλ/2)**2;
+    const dist = 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    document.getElementById('qiDist').textContent = `📍 Distance : ${Math.round(dist).toLocaleString()} km de La Mecque`;
+  }
+
+  // Rotation aiguille Qibla (sans capteur = pointe vers le bearing absolu)
+  const heading = deviceHeading !== null ? deviceHeading : 0;
+  const qAngle  = qiblaBearing - heading;
+  document.getElementById('qiblaNeedle').style.transform = `rotate(${qAngle}deg)`;
+  // Aiguille Nord (compas) pointe toujours vers le haut moins le cap
+  document.getElementById('compassNeedle').style.transform = `rotate(${-heading}deg)`;
+}
+
+// ── Capteur d'orientation du téléphone ───────────
+function startCompassSensor() {
+  if (typeof DeviceOrientationEvent === 'undefined') {
+    setSensorStatus('warn', '⚠️ Capteur non disponible sur cet appareil — orientation fixe');
+    return;
+  }
+
+  // iOS 13+ demande une permission
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(state => {
+      if (state === 'granted') {
+        attachOrientationListener();
+      } else {
+        setSensorStatus('warn', '⚠️ Permission refusée — activez le capteur dans Réglages');
+      }
+    }).catch(() => setSensorStatus('warn', '⚠️ Impossible d\'accéder au capteur'));
+  } else {
+    attachOrientationListener();
+  }
+}
+
+function attachOrientationListener() {
+  orientHandler = (e) => {
+    let heading = null;
+    // webkitCompassHeading = iOS (cap magnétique vrai)
+    if (e.webkitCompassHeading != null) {
+      heading = e.webkitCompassHeading;
+    } else if (e.alpha != null) {
+      // Android — alpha est la rotation autour de Z
+      heading = (360 - e.alpha) % 360;
+    }
+    if (heading !== null) {
+      deviceHeading = heading;
+      if (compassActive) updateQiblaDisplay();
+      setSensorStatus('ok', `✅ Capteur actif · Cap : ${Math.round(heading)}°`);
+    }
+  };
+  window.addEventListener('deviceorientation', orientHandler, true);
+}
+
+function stopCompassSensor() {
+  if (orientHandler) {
+    window.removeEventListener('deviceorientation', orientHandler, true);
+    orientHandler = null;
+  }
+  deviceHeading = null;
+}
+
+function setSensorStatus(type, msg) {
+  const el = document.getElementById('sensorStatus');
+  el.innerHTML = `<span class="sensor-${type === 'ok' ? 'ok' : 'warn'}">${msg}</span>`;
 }
 
 // ════════════════════════════════════════════════
