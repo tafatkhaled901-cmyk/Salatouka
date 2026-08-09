@@ -137,6 +137,58 @@ body{
 }
 .btn-cta-icon{font-size:22px;}
 
+/* Bouton télécharger PWA */
+.btn-install{
+  display:none; /* caché par défaut, affiché par JS */
+  align-items:center;gap:14px;
+  background:linear-gradient(135deg,#0d1f3c,#1a3a5c);
+  border:2px solid var(--gold);
+  color:var(--text);
+  font-weight:600;font-size:15px;
+  padding:16px 28px;border-radius:50px;
+  text-decoration:none;cursor:pointer;
+  font-family:'Inter',sans-serif;
+  transition:all .25s;
+  box-shadow:0 8px 40px rgba(201,168,76,0.2);
+  margin-top:14px;
+  width:100%;max-width:340px;
+  justify-content:center;
+}
+.btn-install.show{display:inline-flex;}
+.btn-install:hover{
+  background:linear-gradient(135deg,#1a3a5c,#0d2a4c);
+  border-color:var(--gold2);
+  transform:translateY(-2px);
+  box-shadow:0 12px 50px rgba(201,168,76,0.3);
+}
+.btn-install-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:var(--gold3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.btn-install-text{}
+.btn-install-text .bit{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+.btn-install-text .biv{font-size:15px;font-weight:700;color:var(--gold2);}
+
+/* Guide installation manuel (iOS) */
+.ios-guide{
+  display:none;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:16px;padding:18px 20px;
+  margin-top:14px;width:100%;max-width:340px;
+  text-align:left;
+}
+.ios-guide.show{display:block;}
+.ios-guide-title{font-size:12px;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;}
+.ios-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13px;color:var(--muted);}
+.ios-step-num{
+  width:22px;height:22px;border-radius:50%;
+  background:var(--gold3);border:1px solid var(--gold);
+  color:var(--gold);font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+
 .btn-secondary{
   display:inline-flex;align-items:center;gap:8px;
   color:var(--muted);font-size:13px;
@@ -439,6 +491,35 @@ footer{
     Ouvrir l'application
   </a>
 
+  <!-- Bouton installer PWA (Android Chrome) -->
+  <button class="btn-install fade-in" id="installBtn" onclick="installApp()">
+    <div class="btn-install-icon">🕌</div>
+    <div class="btn-install-text">
+      <div class="bit">Installer gratuitement</div>
+      <div class="biv">📲 Télécharger l'application</div>
+    </div>
+  </button>
+
+  <!-- Guide iOS -->
+  <div class="ios-guide fade-in" id="iosGuide">
+    <div class="ios-guide-title">📱 Installer sur iPhone</div>
+    <div class="ios-step">
+      <div class="ios-step-num">1</div>
+      <span>Appuie sur <strong style="color:var(--text)">🔗 Ouvrir l'application</strong> ci-dessus</span>
+    </div>
+    <div class="ios-step">
+      <div class="ios-step-num">2</div>
+      <span>Appuie sur l'icône <strong style="color:var(--text)">Partager</strong> en bas de Safari <strong style="color:var(--gold)">⎙</strong></span>
+    </div>
+    <div class="ios-step">
+      <div class="ios-step-num">3</div>
+      <span>Appuie sur <strong style="color:var(--text)">"Sur l'écran d'accueil"</strong> puis <strong style="color:var(--gold)">Ajouter</strong></span>
+    </div>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;">
+      L'icône صلاتك apparaîtra sur ton écran 🕌
+    </div>
+  </div>
+
   <a href="#features" class="btn-secondary fade-in">Voir les fonctionnalités ↓</a>
 
   <div class="scroll-hint">
@@ -608,6 +689,15 @@ footer{
     Ouvrir l'application gratuitement
   </a>
 
+  <!-- Bouton installer (CTA bas) -->
+  <button class="btn-install fade-in" id="installBtn2" onclick="installApp()" style="margin:14px auto 0;">
+    <div class="btn-install-icon">🕌</div>
+    <div class="btn-install-text">
+      <div class="bit">Installer sur ton téléphone</div>
+      <div class="biv">📲 Télécharger l'application</div>
+    </div>
+  </button>
+
   <a href="https://tafatkhaled901-cmyk.github.io/Salatouka/" class="cta-url">
     tafatkhaled901-cmyk.github.io/Salatouka
   </a>
@@ -637,13 +727,13 @@ footer{
 </footer>
 
 <script>
-// Animations au scroll
+// ── Animations au scroll ─────────────────────────
 const observer = new IntersectionObserver(entries => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-// Copier le lien
+// ── Copier le lien ───────────────────────────────
 function copyLink() {
   navigator.clipboard.writeText('https://tafatkhaled901-cmyk.github.io/Salatouka/').then(() => {
     const toast = document.getElementById('toast');
@@ -652,7 +742,7 @@ function copyLink() {
   });
 }
 
-// Horloge live dans le mockup
+// ── Horloge live dans le mockup ──────────────────
 function updateMiniClock() {
   const now = new Date();
   const h = String(now.getHours()).padStart(2,'0');
@@ -662,6 +752,69 @@ function updateMiniClock() {
 }
 updateMiniClock();
 setInterval(updateMiniClock, 1000);
+
+// ── PWA Install ──────────────────────────────────
+let deferredPrompt = null;
+
+// Détecter si iOS
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+// Détecter si déjà installé (standalone)
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+
+// Écouter l'événement beforeinstallprompt (Android Chrome)
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Afficher les boutons installer
+  document.querySelectorAll('.btn-install').forEach(b => b.classList.add('show'));
+  console.log('✅ PWA installable détectée');
+});
+
+// Si iOS et pas encore installé → montrer le guide manuel
+if (isIOS && !isStandalone) {
+  document.getElementById('iosGuide').classList.add('show');
+}
+
+// Si déjà installé → masquer les boutons
+if (isStandalone) {
+  document.querySelectorAll('.btn-install').forEach(b => b.style.display = 'none');
+  document.getElementById('iosGuide') && (document.getElementById('iosGuide').style.display = 'none');
+}
+
+// Fonction installation
+async function installApp() {
+  if (deferredPrompt) {
+    // Android Chrome : déclencher le popup natif
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      showToast('✅ Application installée ! 🕌');
+      document.querySelectorAll('.btn-install').forEach(b => b.classList.remove('show'));
+    }
+    deferredPrompt = null;
+  } else if (isIOS) {
+    // iOS : montrer le guide
+    document.getElementById('iosGuide').classList.toggle('show');
+  } else {
+    // Autres : rediriger vers l'app
+    window.open('https://tafatkhaled901-cmyk.github.io/Salatouka/', '_blank');
+  }
+}
+
+// Confirmer quand l'app est installée
+window.addEventListener('appinstalled', () => {
+  showToast('🕌 Salatuk installé sur votre écran !');
+  document.querySelectorAll('.btn-install').forEach(b => b.classList.remove('show'));
+  deferredPrompt = null;
+});
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
 </script>
 </body>
 </html>
