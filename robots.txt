@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tafatkhaled901-cmyk.github.io/Salatouka/sitemap.xml
