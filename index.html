@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Salatuk × Météo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,7 +17,6 @@
       --sky-soft:  #7bbfff;
       --text:      #f0f4ff;
       --muted:     #8899bb;
-      --active:    #1a2744;
       --prayer-bg: rgba(201,168,76,0.07);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,14 +30,110 @@
       align-items: center;
     }
 
+    /* ── MODAL VILLE ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(5,8,20,0.92);
+      z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+      backdrop-filter: blur(6px);
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: #111827;
+      border: 1px solid #1e2d45;
+      border-radius: 24px;
+      padding: 32px 24px 28px;
+      width: 100%; max-width: 400px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+    }
+    .modal-logo {
+      font-family: 'Amiri', serif;
+      font-size: 28px; color: var(--gold);
+      text-align: center; margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 12px; color: var(--muted);
+      text-align: center; margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+    .modal-label {
+      font-size: 11px; color: var(--muted);
+      letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .modal-input {
+      width: 100%;
+      background: #0a0f1e;
+      border: 1px solid #1e2d45;
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: var(--text);
+      font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 10px;
+    }
+    .modal-input:focus { border-color: var(--gold); }
+    .suggestions {
+      background: #0a0f1e;
+      border: 1px solid #1e2d45;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .suggestions.hidden { display: none; }
+    .suggestion-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #1e2d45;
+      transition: background 0.15s;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: #111827; }
+    .suggestion-item .city-name { color: var(--text); font-weight: 500; }
+    .suggestion-item .city-country { color: var(--muted); font-size: 12px; }
+    .modal-method-row {
+      display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+    }
+    .method-chip {
+      flex: 1; min-width: 80px;
+      background: #0a0f1e; border: 1px solid #1e2d45;
+      border-radius: 8px; padding: 8px 4px;
+      text-align: center; cursor: pointer;
+      font-size: 11px; color: var(--muted);
+      transition: all 0.2s;
+    }
+    .method-chip.active {
+      border-color: var(--gold); color: var(--gold-soft);
+      background: rgba(201,168,76,0.08);
+    }
+    .modal-btn {
+      width: 100%;
+      background: var(--gold);
+      color: #0a0f1e;
+      border: none; border-radius: 12px;
+      padding: 16px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .modal-btn:hover { opacity: 0.9; }
+    .modal-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* ── Header ── */
     header {
-      width: 100%;
-      max-width: 480px;
+      width: 100%; max-width: 480px;
       padding: 32px 24px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+      display: flex; justify-content: space-between; align-items: flex-start;
     }
     .app-name { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
     .app-logo { font-family: 'Amiri', serif; font-size: 22px; color: var(--gold); margin-top: 2px; }
@@ -48,33 +143,48 @@
 
     /* ── Clock ── */
     .clock-section {
-      width: 100%;
-      max-width: 480px;
-      padding: 36px 24px 24px;
-      text-align: center;
+      width: 100%; max-width: 480px;
+      padding: 28px 24px 16px; text-align: center;
     }
-    .clock { font-size: 72px; font-weight: 300; letter-spacing: -2px; line-height: 1; }
+    .clock { font-size: 68px; font-weight: 300; letter-spacing: -2px; line-height: 1; }
     .clock span { color: var(--gold); }
-    .clock-sub { font-size: 13px; color: var(--muted); margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
+    .clock-sub { font-size: 12px; color: var(--muted); margin-top: 6px; letter-spacing: 1px; }
+
+    /* ── Location bar ── */
+    .location-bar {
+      width: calc(100% - 48px); max-width: 432px;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px; padding: 12px 16px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .location-bar:hover { border-color: var(--gold); }
+    .location-bar .loc-info { flex: 1; }
+    .location-bar .loc-city { font-size: 14px; font-weight: 500; color: var(--text); }
+    .location-bar .loc-method { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .location-bar .loc-icon { font-size: 20px; }
+    .location-bar .loc-change { font-size: 11px; color: var(--gold); font-weight: 600; }
+
+    /* ── Section headers ── */
+    .section-header {
+      width: calc(100% - 48px); max-width: 432px;
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+    }
+    .section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .section-line { flex: 1; height: 1px; background: var(--border); }
 
     /* ── Weather Card ── */
     .weather-card {
-      width: calc(100% - 48px);
-      max-width: 432px;
+      width: calc(100% - 48px); max-width: 432px;
       background: linear-gradient(135deg, #0d1f3c 0%, #112240 100%);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px 24px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
+      border: 1px solid var(--border); border-radius: 20px;
+      padding: 20px 24px; margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: relative; overflow: hidden;
     }
     .weather-card::before {
-      content: '';
-      position: absolute; top: -30px; right: -30px;
+      content: ''; position: absolute; top: -30px; right: -30px;
       width: 100px; height: 100px;
       background: radial-gradient(circle, rgba(74,158,255,0.15) 0%, transparent 70%);
       border-radius: 50%;
@@ -82,284 +192,434 @@
     .weather-left .city { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
     .weather-left .temp { font-size: 44px; font-weight: 300; color: var(--sky-soft); line-height: 1; }
     .weather-left .condition { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .weather-right { text-align: right; }
     .weather-icon { font-size: 52px; line-height: 1; }
     .weather-details { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
     .weather-detail { flex: 1; text-align: center; }
     .weather-detail .label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
     .weather-detail .value { font-size: 13px; color: var(--text); margin-top: 3px; font-weight: 500; }
 
-    /* ── Prayer Times ── */
-    .section-header {
-      width: calc(100% - 48px);
-      max-width: 432px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
-    .section-line { flex: 1; height: 1px; background: var(--border); }
-
+    /* ── Prayer List ── */
     .prayer-list {
-      width: calc(100% - 48px);
-      max-width: 432px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 16px;
+      width: calc(100% - 48px); max-width: 432px;
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;
     }
     .prayer-item {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 14px; padding: 14px 18px;
+      display: flex; align-items: center; justify-content: space-between;
       transition: all 0.2s;
     }
     .prayer-item.active {
-      background: var(--prayer-bg);
-      border-color: var(--gold);
+      background: var(--prayer-bg); border-color: var(--gold);
       box-shadow: 0 0 20px rgba(201,168,76,0.08);
     }
-    .prayer-item.passed { opacity: 0.45; }
+    .prayer-item.passed { opacity: 0.4; }
     .prayer-left { display: flex; align-items: center; gap: 14px; }
     .prayer-icon { font-size: 20px; }
-    .prayer-name { font-size: 15px; font-weight: 500; color: var(--text); }
+    .prayer-name { font-size: 15px; font-weight: 500; }
     .prayer-name-ar { font-family: 'Amiri', serif; font-size: 13px; color: var(--muted); margin-top: 1px; }
-    .prayer-time { font-size: 18px; font-weight: 400; color: var(--text); }
+    .prayer-time { font-size: 18px; font-weight: 400; }
     .prayer-item.active .prayer-time { color: var(--gold-soft); font-weight: 600; }
     .active-badge {
       font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
       background: var(--gold); color: #0a0f1e;
-      padding: 2px 7px; border-radius: 20px; font-weight: 700;
-      margin-left: 8px; vertical-align: middle;
+      padding: 2px 7px; border-radius: 20px; font-weight: 700; margin-left: 8px;
     }
 
-    /* ── Next Prayer Countdown ── */
+    /* ── Countdown ── */
     .countdown-card {
-      width: calc(100% - 48px);
-      max-width: 432px;
+      width: calc(100% - 48px); max-width: 432px;
       background: linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(201,168,76,0.04) 100%);
       border: 1px solid rgba(201,168,76,0.3);
-      border-radius: 20px;
-      padding: 20px 24px;
-      margin-bottom: 32px;
-      text-align: center;
+      border-radius: 20px; padding: 20px 24px;
+      margin-bottom: 32px; text-align: center;
     }
     .countdown-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
-    .countdown-name { font-size: 20px; color: var(--gold-soft); font-weight: 600; margin-bottom: 6px; }
+    .countdown-name { font-size: 18px; color: var(--gold-soft); font-weight: 600; margin-bottom: 6px; }
     .countdown-timer { font-size: 38px; font-weight: 300; color: var(--text); letter-spacing: 2px; }
 
-    /* ── Location bar ── */
-    .location-bar {
-      width: calc(100% - 48px);
-      max-width: 432px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 16px;
-      padding: 10px 14px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
+    /* ── Loading spinner ── */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 2px solid rgba(201,168,76,0.3);
+      border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+      vertical-align: middle; margin-right: 8px;
     }
-    .location-bar span { font-size: 12px; color: var(--muted); }
-    .location-bar strong { font-size: 13px; color: var(--text); }
-    .location-bar .arrow { margin-left: auto; color: var(--muted); }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Footer ── */
-    footer {
-      padding: 16px;
-      font-size: 10px;
-      color: var(--border);
-      letter-spacing: 1px;
-      text-align: center;
-    }
+    footer { padding: 16px; font-size: 10px; color: var(--border); letter-spacing: 1px; text-align: center; }
   </style>
 </head>
 <body>
 
+<!-- ══ MODAL RECHERCHE VILLE ══ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-logo">صلاتك × Météo</div>
+    <div class="modal-sub">Horaires de prière · Monde entier</div>
+
+    <div class="modal-label">🌍 Votre ville</div>
+    <input class="modal-input" id="cityInput" type="text"
+           placeholder="Ex: Paris, Alger, Casablanca, Istanbul..."
+           autocomplete="off" spellcheck="false"/>
+    <div class="suggestions hidden" id="suggestions"></div>
+
+    <div class="modal-label">📐 Méthode de calcul</div>
+    <div class="modal-method-row" id="methodRow">
+      <div class="method-chip active" data-m="MWL">MWL<br><span style="font-size:9px;color:inherit">Monde</span></div>
+      <div class="method-chip" data-m="ISNA">ISNA<br><span style="font-size:9px;color:inherit">Amér.</span></div>
+      <div class="method-chip" data-m="Egypt">Egypte<br><span style="font-size:9px;color:inherit">Égypte</span></div>
+      <div class="method-chip" data-m="Makkah">Makkah<br><span style="font-size:9px;color:inherit">Golf</span></div>
+      <div class="method-chip" data-m="Algeria">Algérie<br><span style="font-size:9px;color:inherit">DZ</span></div>
+    </div>
+
+    <button class="modal-btn" id="goBtn" disabled>Afficher les horaires →</button>
+  </div>
+</div>
+
+<!-- ══ APP PRINCIPALE ══ -->
 <header>
   <div>
     <div class="app-name">Dashboard</div>
     <div class="app-logo">صلاتك × Météo</div>
   </div>
   <div class="hijri-date">
-    <div class="hijri" id="hijriDate">٨ محرم ١٤٤٧</div>
-    <div class="gregorian" id="gregDate">Lun. 3 août 2026</div>
+    <div class="hijri" id="hijriDate">—</div>
+    <div class="gregorian" id="gregDate">—</div>
   </div>
 </header>
 
 <div class="clock-section">
-  <div class="clock" id="clock">17<span>:</span>11</div>
-  <div class="clock-sub" id="clockSub">heure locale</div>
+  <div class="clock" id="clock">--<span>:</span>--</div>
+  <div class="clock-sub" id="clockSub">—</div>
 </div>
 
-<div class="location-bar">
-  <span>📍</span>
-  <strong id="cityName">Paris, France</strong>
-  <span class="arrow">›</span>
+<div class="location-bar" id="locationBar" onclick="openModal()">
+  <div class="loc-icon">📍</div>
+  <div class="loc-info">
+    <div class="loc-city" id="locCity">Chargement…</div>
+    <div class="loc-method" id="locMethod">—</div>
+  </div>
+  <div class="loc-change">Changer ›</div>
 </div>
 
-<!-- Météo -->
 <div class="section-header">
   <div class="section-title">Météo</div>
   <div class="section-line"></div>
 </div>
-
 <div class="weather-card">
   <div class="weather-left">
-    <div class="city" id="weatherCity">Paris</div>
-    <div class="temp" id="weatherTemp">24°</div>
-    <div class="condition" id="weatherCondition">Partiellement nuageux</div>
+    <div class="city" id="weatherCity">—</div>
+    <div class="temp" id="weatherTemp">—°</div>
+    <div class="condition" id="weatherCond">—</div>
     <div class="weather-details">
-      <div class="weather-detail">
-        <div class="label">Humidité</div>
-        <div class="value" id="humidity">62%</div>
-      </div>
-      <div class="weather-detail">
-        <div class="label">Vent</div>
-        <div class="value" id="wind">14 km/h</div>
-      </div>
-      <div class="weather-detail">
-        <div class="label">Ressenti</div>
-        <div class="value" id="feelsLike">22°</div>
-      </div>
+      <div class="weather-detail"><div class="label">Humidité</div><div class="value" id="humidity">—</div></div>
+      <div class="weather-detail"><div class="label">Vent</div><div class="value" id="wind">—</div></div>
+      <div class="weather-detail"><div class="label">Ressenti</div><div class="value" id="feelsLike">—</div></div>
     </div>
   </div>
-  <div class="weather-right">
-    <div class="weather-icon" id="weatherIcon">⛅</div>
-  </div>
+  <div class="weather-icon" id="weatherIcon">🌍</div>
 </div>
 
-<!-- Prières -->
 <div class="section-header">
   <div class="section-title">Horaires des prières</div>
   <div class="section-line"></div>
 </div>
-
-<div class="prayer-list" id="prayerList"></div>
-
-<!-- Countdown -->
-<div class="countdown-card">
-  <div class="countdown-label">Prochaine prière</div>
-  <div class="countdown-name" id="nextName">Maghrib</div>
-  <div class="countdown-timer" id="countdown">–:––</div>
+<div class="prayer-list" id="prayerList">
+  <div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">
+    Entrez votre ville pour voir les horaires
+  </div>
 </div>
 
-<footer>SALATUK × MÉTÉO · GITHUB PAGES</footer>
+<div class="countdown-card">
+  <div class="countdown-label">Prochaine prière</div>
+  <div class="countdown-name" id="nextName">—</div>
+  <div class="countdown-timer" id="countdown">—:——</div>
+</div>
+
+<footer>SALATUK × MÉTÉO · OPEN SOURCE</footer>
 
 <script>
-// ─── Prayer times (static demo for Paris, Aug 3) ───────────────────────────
-const PRAYERS = [
-  { name: 'Fajr',    nameAr: 'الفجر',  icon: '🌙', time: '04:18' },
-  { name: 'Dhuhr',   nameAr: 'الظهر',  icon: '☀️', time: '13:39' },
-  { name: 'Asr',     nameAr: 'العصر',  icon: '🌤', time: '17:20' },
-  { name: 'Maghrib', nameAr: 'المغرب', icon: '🌅', time: '21:24' },
-  { name: 'Isha',    nameAr: 'العشاء', icon: '🌌', time: '23:10' },
+// ════════════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════════════
+const PRAYER_META = [
+  { key:'Fajr',    nameAr:'الفجر',  icon:'🌙' },
+  { key:'Sunrise', nameAr:'الشروق', icon:'🌄' },
+  { key:'Dhuhr',   nameAr:'الظهر',  icon:'☀️' },
+  { key:'Asr',     nameAr:'العصر',  icon:'🌤' },
+  { key:'Maghrib', nameAr:'المغرب', icon:'🌅' },
+  { key:'Isha',    nameAr:'العشاء', icon:'🌌' },
 ];
 
-// ─── Render prayers ─────────────────────────────────────────────────────────
-function timeToMinutes(t) {
-  const [h, m] = t.split(':').map(Number);
+const METHOD_MAP = {
+  MWL:     2,
+  ISNA:    1,
+  Egypt:   5,
+  Makkah:  4,
+  Algeria: 7,
+};
+
+let currentCity   = null; // { name, country, lat, lon, tz }
+let currentTimes  = {};   // { Fajr:'04:18', ... }
+let selectedMethod = 'MWL';
+
+// ════════════════════════════════════════════════════════
+//  MODAL
+// ════════════════════════════════════════════════════════
+function openModal() {
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('cityInput').focus();
+}
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+}
+
+// Method chips
+document.querySelectorAll('.method-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.method-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedMethod = chip.dataset.m;
+  });
+});
+
+// ════════════════════════════════════════════════════════
+//  AUTOCOMPLETE VILLES (API publique)
+// ════════════════════════════════════════════════════════
+let searchTimer = null;
+const cityInput   = document.getElementById('cityInput');
+const suggestBox  = document.getElementById('suggestions');
+const goBtn       = document.getElementById('goBtn');
+
+cityInput.addEventListener('input', () => {
+  const q = cityInput.value.trim();
+  clearTimeout(searchTimer);
+  if (q.length < 2) { suggestBox.classList.add('hidden'); goBtn.disabled = true; currentCity = null; return; }
+  searchTimer = setTimeout(() => searchCities(q), 350);
+});
+
+async function searchCities(q) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1&featuretype=city`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
+    const data = await res.json();
+    showSuggestions(data);
+  } catch(e) { suggestBox.classList.add('hidden'); }
+}
+
+function showSuggestions(results) {
+  suggestBox.innerHTML = '';
+  if (!results.length) { suggestBox.classList.add('hidden'); return; }
+  results.forEach(r => {
+    const name    = r.address?.city || r.address?.town || r.address?.village || r.name;
+    const country = r.address?.country || '';
+    const div = document.createElement('div');
+    div.className = 'suggestion-item';
+    div.innerHTML = `<span style="font-size:18px">📍</span>
+      <div>
+        <div class="city-name">${name}</div>
+        <div class="city-country">${country}</div>
+      </div>`;
+    div.addEventListener('click', () => {
+      cityInput.value = `${name}, ${country}`;
+      suggestBox.classList.add('hidden');
+      goBtn.disabled = false;
+      currentCity = { name, country, lat: parseFloat(r.lat), lon: parseFloat(r.lon) };
+    });
+    suggestBox.appendChild(div);
+  });
+  suggestBox.classList.remove('hidden');
+}
+
+cityInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && currentCity) loadPrayerTimes();
+});
+
+goBtn.addEventListener('click', () => {
+  if (currentCity) loadPrayerTimes();
+});
+
+// ════════════════════════════════════════════════════════
+//  CHARGEMENT HORAIRES via Aladhan API (gratuit, pas de clé)
+// ════════════════════════════════════════════════════════
+async function loadPrayerTimes() {
+  if (!currentCity) return;
+  goBtn.disabled = true;
+  goBtn.innerHTML = '<span class="spinner"></span>Calcul en cours…';
+
+  try {
+    const today = new Date();
+    const d = today.getDate(), m = today.getMonth()+1, y = today.getFullYear();
+    const method = METHOD_MAP[selectedMethod] || 2;
+    const url = `https://api.aladhan.com/v1/timings/${d}-${m}-${y}?latitude=${currentCity.lat}&longitude=${currentCity.lon}&method=${method}`;
+
+    const res  = await fetch(url);
+    const json = await res.json();
+
+    if (json.code !== 200) throw new Error('API error');
+
+    const t = json.data.timings;
+    currentTimes = {
+      Fajr:    t.Fajr,
+      Sunrise: t.Sunrise,
+      Dhuhr:   t.Dhuhr,
+      Asr:     t.Asr,
+      Maghrib: t.Maghrib,
+      Isha:    t.Isha,
+    };
+
+    // Hijri date
+    const hijri = json.data.date.hijri;
+    document.getElementById('hijriDate').textContent =
+      `${hijri.day} ${hijri.month.ar} ${hijri.year}`;
+
+    // Update location bar
+    document.getElementById('locCity').textContent = `${currentCity.name}, ${currentCity.country}`;
+    document.getElementById('locMethod').textContent = `Méthode : ${selectedMethod}`;
+
+    // Fetch weather (Open-Meteo, aucune clé requise)
+    fetchWeather(currentCity.lat, currentCity.lon, currentCity.name);
+
+    closeModal();
+    renderPrayers();
+
+  } catch(err) {
+    goBtn.innerHTML = '❌ Erreur – réessayer';
+    goBtn.disabled = false;
+    setTimeout(() => { goBtn.innerHTML = 'Afficher les horaires →'; goBtn.disabled = false; }, 2000);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  MÉTÉO — Open-Meteo (100% gratuit, sans clé API)
+// ════════════════════════════════════════════════════════
+const WMO_ICONS = {
+  0:'☀️',1:'🌤',2:'⛅',3:'🌥',
+  45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',
+  61:'🌧',63:'🌧',65:'🌨',71:'❄️',73:'❄️',75:'❄️',
+  80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈',
+};
+const WMO_TEXT = {
+  0:'Ciel dégagé',1:'Peu nuageux',2:'Partiellement nuageux',3:'Couvert',
+  45:'Brouillard',48:'Brouillard givrant',51:'Bruine légère',53:'Bruine',55:'Bruine dense',
+  61:'Pluie légère',63:'Pluie modérée',65:'Pluie forte',71:'Neige légère',73:'Neige',75:'Forte neige',
+  80:'Averses légères',81:'Averses',82:'Averses violentes',95:'Orage',96:'Orage avec grêle',99:'Orage fort',
+};
+
+async function fetchWeather(lat, lon, cityName) {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&wind_speed_unit=kmh`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    const c    = data.current;
+    const code = c.weather_code;
+
+    document.getElementById('weatherCity').textContent  = cityName;
+    document.getElementById('weatherTemp').textContent  = Math.round(c.temperature_2m) + '°';
+    document.getElementById('weatherCond').textContent  = WMO_TEXT[code] || 'Variable';
+    document.getElementById('weatherIcon').textContent  = WMO_ICONS[code] || '🌍';
+    document.getElementById('humidity').textContent     = c.relative_humidity_2m + '%';
+    document.getElementById('wind').textContent         = Math.round(c.wind_speed_10m) + ' km/h';
+    document.getElementById('feelsLike').textContent    = Math.round(c.apparent_temperature) + '°';
+  } catch(e) {
+    document.getElementById('weatherCond').textContent = 'Météo indisponible';
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDU DES PRIÈRES
+// ════════════════════════════════════════════════════════
+function timeToMin(t) {
+  if (!t) return 0;
+  const clean = t.replace(/\s*(AM|PM).*/i,'').trim();
+  const [h, m] = clean.split(':').map(Number);
   return h * 60 + m;
 }
 
-function renderPrayers(nowMin) {
+function renderPrayers() {
   const list = document.getElementById('prayerList');
   list.innerHTML = '';
-  let activeIdx = -1;
+  const now    = new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const salat  = PRAYER_META.filter(p => p.key !== 'Sunrise');
 
-  for (let i = 0; i < PRAYERS.length; i++) {
-    const start = timeToMinutes(PRAYERS[i].time);
-    const end   = i + 1 < PRAYERS.length ? timeToMinutes(PRAYERS[i+1].time) : 24*60;
+  let activeIdx = -1;
+  for (let i = 0; i < salat.length; i++) {
+    const start = timeToMin(currentTimes[salat[i].key]);
+    const end   = i+1 < salat.length ? timeToMin(currentTimes[salat[i+1].key]) : 24*60;
     if (nowMin >= start && nowMin < end) activeIdx = i;
   }
 
-  PRAYERS.forEach((p, i) => {
-    const pMin = timeToMinutes(p.time);
+  salat.forEach((p, i) => {
+    const pMin  = timeToMin(currentTimes[p.key]);
     const passed = nowMin > pMin && i !== activeIdx;
     const active = i === activeIdx;
     const div = document.createElement('div');
-    div.className = 'prayer-item' + (active ? ' active' : '') + (passed ? ' passed' : '');
+    div.className = 'prayer-item' + (active?' active':'') + (passed?' passed':'');
     div.innerHTML = `
       <div class="prayer-left">
         <div class="prayer-icon">${p.icon}</div>
         <div>
-          <div class="prayer-name">${p.name}${active ? '<span class="active-badge">En cours</span>' : ''}</div>
+          <div class="prayer-name">${p.key}${active?'<span class="active-badge">En cours</span>':''}</div>
           <div class="prayer-name-ar">${p.nameAr}</div>
         </div>
       </div>
-      <div class="prayer-time">${p.time}</div>
-    `;
+      <div class="prayer-time">${currentTimes[p.key] || '—'}</div>`;
     list.appendChild(div);
   });
 
-  return activeIdx;
+  // Countdown
+  const upcoming = salat.filter(p => timeToMin(currentTimes[p.key]) > nowMin);
+  const next = upcoming[0] || salat[0];
+  let diff = timeToMin(currentTimes[next.key]) - nowMin;
+  if (diff < 0) diff += 1440;
+  const hh = Math.floor(diff/60), mm = diff%60;
+  document.getElementById('nextName').textContent = `${next.key} · ${next.nameAr}`;
+  document.getElementById('countdown').textContent = hh > 0 ? `${hh}h ${String(mm).padStart(2,'0')}min` : `${mm} min`;
 }
 
-// ─── Countdown to next prayer ───────────────────────────────────────────────
-function updateCountdown(nowMin) {
-  let next = PRAYERS.find(p => timeToMinutes(p.time) > nowMin);
-  if (!next) next = PRAYERS[0]; // wrap to Fajr next day
-
-  document.getElementById('nextName').textContent = next.name + ' · ' + next.nameAr;
-
-  let diff = timeToMinutes(next.time) - nowMin;
-  if (diff < 0) diff += 24 * 60;
-  const h = Math.floor(diff / 60);
-  const m = diff % 60;
-  document.getElementById('countdown').textContent =
-    h > 0 ? `${h}h ${String(m).padStart(2,'0')}min` : `${m} min`;
-}
-
-// ─── Clock ──────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════
+//  HORLOGE
+// ════════════════════════════════════════════════════════
 function updateClock() {
-  const now  = new Date();
-  const h    = String(now.getHours()).padStart(2, '0');
-  const m    = String(now.getMinutes()).padStart(2, '0');
-  const s    = String(now.getSeconds()).padStart(2, '0');
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const s = String(now.getSeconds()).padStart(2,'0');
   document.getElementById('clock').innerHTML = `${h}<span>:</span>${m}`;
-  document.getElementById('clockSub').textContent = `${s}s · heure locale`;
+  document.getElementById('clockSub').textContent = `${s}s`;
 
-  renderPrayers(nowMin);
-  updateCountdown(nowMin);
-
-  // Date
-  const days = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+  const days   = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
   const months = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
   document.getElementById('gregDate').textContent =
     `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-}
 
+  if (Object.keys(currentTimes).length) renderPrayers();
+}
 updateClock();
 setInterval(updateClock, 1000);
 
-// ─── Geolocation + weather (demo fallback) ──────────────────────────────────
-const weatherConditions = [
-  { icon: '☀️', text: 'Ensoleillé',          temp: 28 },
-  { icon: '⛅', text: 'Partiellement nuageux', temp: 24 },
-  { icon: '🌥', text: 'Nuageux',              temp: 20 },
-  { icon: '🌦', text: 'Averses',              temp: 18 },
-  { icon: '🌙', text: 'Nuit claire',          temp: 16 },
-];
-
-function setWeather(w) {
-  document.getElementById('weatherIcon').textContent = w.icon;
-  document.getElementById('weatherTemp').textContent = w.temp + '°';
-  document.getElementById('weatherCondition').textContent = w.text;
+// ════════════════════════════════════════════════════════
+//  GÉOLOCALISATION AUTO au démarrage
+// ════════════════════════════════════════════════════════
+async function autoLocate() {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const { latitude: lat, longitude: lon } = pos.coords;
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`, { headers:{'Accept-Language':'fr'} });
+      const d = await r.json();
+      const name    = d.address?.city || d.address?.town || d.address?.village || 'Ma ville';
+      const country = d.address?.country || '';
+      currentCity = { name, country, lat, lon };
+      cityInput.value = `${name}, ${country}`;
+      goBtn.disabled = false;
+    } catch(e) {}
+  }, () => {/* permission refusée, user entre manuellement */});
 }
-
-// Pick condition by hour for demo realism
-const hr = new Date().getHours();
-const idx = hr < 6 ? 4 : hr < 12 ? 0 : hr < 16 ? 1 : hr < 19 ? 2 : 4;
-setWeather(weatherConditions[idx]);
+autoLocate();
 </script>
 </body>
 </html>
