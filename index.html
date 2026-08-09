@@ -401,6 +401,28 @@
   </div>
 </div>
 
+<!-- ══ BOUTON TEST ADHAN ══ -->
+<div style="width:calc(100% - 48px);max-width:432px;margin-bottom:16px;">
+  <button onclick="testAdhan()" style="
+    width:100%;
+    background:linear-gradient(135deg,#0d1f3c,#1a3a5c);
+    border:1px dashed #c9a84c;
+    border-radius:14px;
+    padding:14px 20px;
+    display:flex;align-items:center;gap:12px;
+    cursor:pointer;color:#f0f4ff;
+    font-family:'Inter',sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  ">
+    <span style="font-size:26px">🔊</span>
+    <div style="text-align:left;flex:1">
+      <div style="font-size:11px;color:#8899bb;letter-spacing:2px;text-transform:uppercase;">Test</div>
+      <div style="font-size:14px;font-weight:600;color:#e8c97a;margin-top:2px;">Tester l'Adhan maintenant</div>
+    </div>
+    <span style="color:#c9a84c;font-size:18px">▶</span>
+  </button>
+</div>
+
 <!-- ══ PRIÈRES ══ -->
 <div class="section-header">
   <div class="section-title">Horaires des prières</div><div class="section-line"></div>
@@ -958,6 +980,15 @@ function forcePlayAdhan() {
   }
   adhanAudio.play();
   playBtn.classList.remove('visible');
+}
+
+// ── Test Adhan immédiat ─────────────────────────
+function testAdhan() {
+  // Choisir la prière la plus proche pour le test
+  const testPrayer = PRAYER_META.find(p => !p.isSunrise) || PRAYER_META[0];
+  const now = new Date();
+  const timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  triggerAdhan(testPrayer, timeStr, selectedAdhan === 'off' ? 'makkah' : selectedAdhan);
 }
 
 function dismissAdhan() {
