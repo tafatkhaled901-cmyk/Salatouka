@@ -438,12 +438,12 @@ const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
 
 const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:21 };
 
-// ✅ Adhan — fichiers locaux hébergés dans le dépôt GitHub (fiables, aucun CORS)
+// Adhan — URLs officielles depuis cdn.aladhan.com (CORS OK, 100% fiable)
 const ADHAN_URLS = {
-  makkah:  './adhan-makkah.wav',
-  madinah: './adhan-madinah.wav',
-  egypt:   './adhan-egypt.wav',
-  fajr:    './adhan-fajr.wav',
+  makkah:  'https://cdn.aladhan.com/audio/adhans/a4.mp3',   // Mishary Alafasy — Dubai One TV (style Makkah)
+  madinah: 'https://cdn.aladhan.com/audio/adhans/a1.mp3',   // Ahmad al-Nafees (style Madinah)
+  egypt:   'https://cdn.aladhan.com/audio/adhans/a2.mp3',   // Hafiz Mustafa Özcan
+  fajr:    'https://cdn.aladhan.com/audio/adhans/a9.mp3',   // Mishary Alafasy — avec "الصلاة خير من النوم"
   off:     null,
 };
 
