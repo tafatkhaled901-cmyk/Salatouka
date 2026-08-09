@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Salatuk × Météo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #0a0f1e;
+      --card:      #111827;
+      --border:    #1e2d45;
+      --gold:      #c9a84c;
+      --gold-soft: #e8c97a;
+      --sky:       #4a9eff;
+      --sky-soft:  #7bbfff;
+      --text:      #f0f4ff;
+      --muted:     #8899bb;
+      --active:    #1a2744;
+      --prayer-bg: rgba(201,168,76,0.07);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Header ── */
+    header {
+      width: 100%;
+      max-width: 480px;
+      padding: 32px 24px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .app-name { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--muted); }
+    .app-logo { font-family: 'Amiri', serif; font-size: 22px; color: var(--gold); margin-top: 2px; }
+    .hijri-date { text-align: right; }
+    .hijri-date .hijri { font-family: 'Amiri', serif; font-size: 15px; color: var(--gold-soft); }
+    .hijri-date .gregorian { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Clock ── */
+    .clock-section {
+      width: 100%;
+      max-width: 480px;
+      padding: 36px 24px 24px;
+      text-align: center;
+    }
+    .clock { font-size: 72px; font-weight: 300; letter-spacing: -2px; line-height: 1; }
+    .clock span { color: var(--gold); }
+    .clock-sub { font-size: 13px; color: var(--muted); margin-top: 8px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* ── Weather Card ── */
+    .weather-card {
+      width: calc(100% - 48px);
+      max-width: 432px;
+      background: linear-gradient(135deg, #0d1f3c 0%, #112240 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .weather-card::before {
+      content: '';
+      position: absolute; top: -30px; right: -30px;
+      width: 100px; height: 100px;
+      background: radial-gradient(circle, rgba(74,158,255,0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+    .weather-left .city { font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+    .weather-left .temp { font-size: 44px; font-weight: 300; color: var(--sky-soft); line-height: 1; }
+    .weather-left .condition { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .weather-right { text-align: right; }
+    .weather-icon { font-size: 52px; line-height: 1; }
+    .weather-details { display: flex; gap: 16px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .weather-detail { flex: 1; text-align: center; }
+    .weather-detail .label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+    .weather-detail .value { font-size: 13px; color: var(--text); margin-top: 3px; font-weight: 500; }
+
+    /* ── Prayer Times ── */
+    .section-header {
+      width: calc(100% - 48px);
+      max-width: 432px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .section-title { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+    .section-line { flex: 1; height: 1px; background: var(--border); }
+
+    .prayer-list {
+      width: calc(100% - 48px);
+      max-width: 432px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .prayer-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.2s;
+    }
+    .prayer-item.active {
+      background: var(--prayer-bg);
+      border-color: var(--gold);
+      box-shadow: 0 0 20px rgba(201,168,76,0.08);
+    }
+    .prayer-item.passed { opacity: 0.45; }
+    .prayer-left { display: flex; align-items: center; gap: 14px; }
+    .prayer-icon { font-size: 20px; }
+    .prayer-name { font-size: 15px; font-weight: 500; color: var(--text); }
+    .prayer-name-ar { font-family: 'Amiri', serif; font-size: 13px; color: var(--muted); margin-top: 1px; }
+    .prayer-time { font-size: 18px; font-weight: 400; color: var(--text); }
+    .prayer-item.active .prayer-time { color: var(--gold-soft); font-weight: 600; }
+    .active-badge {
+      font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+      background: var(--gold); color: #0a0f1e;
+      padding: 2px 7px; border-radius: 20px; font-weight: 700;
+      margin-left: 8px; vertical-align: middle;
+    }
+
+    /* ── Next Prayer Countdown ── */
+    .countdown-card {
+      width: calc(100% - 48px);
+      max-width: 432px;
+      background: linear-gradient(135deg, rgba(201,168,76,0.1) 0%, rgba(201,168,76,0.04) 100%);
+      border: 1px solid rgba(201,168,76,0.3);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    .countdown-label { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .countdown-name { font-size: 20px; color: var(--gold-soft); font-weight: 600; margin-bottom: 6px; }
+    .countdown-timer { font-size: 38px; font-weight: 300; color: var(--text); letter-spacing: 2px; }
+
+    /* ── Location bar ── */
+    .location-bar {
+      width: calc(100% - 48px);
+      max-width: 432px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+      padding: 10px 14px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+    }
+    .location-bar span { font-size: 12px; color: var(--muted); }
+    .location-bar strong { font-size: 13px; color: var(--text); }
+    .location-bar .arrow { margin-left: auto; color: var(--muted); }
+
+    /* ── Footer ── */
+    footer {
+      padding: 16px;
+      font-size: 10px;
+      color: var(--border);
+      letter-spacing: 1px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="app-name">Dashboard</div>
+    <div class="app-logo">صلاتك × Météo</div>
+  </div>
+  <div class="hijri-date">
+    <div class="hijri" id="hijriDate">٨ محرم ١٤٤٧</div>
+    <div class="gregorian" id="gregDate">Lun. 3 août 2026</div>
+  </div>
+</header>
+
+<div class="clock-section">
+  <div class="clock" id="clock">17<span>:</span>11</div>
+  <div class="clock-sub" id="clockSub">heure locale</div>
+</div>
+
+<div class="location-bar">
+  <span>📍</span>
+  <strong id="cityName">Paris, France</strong>
+  <span class="arrow">›</span>
+</div>
+
+<!-- Météo -->
+<div class="section-header">
+  <div class="section-title">Météo</div>
+  <div class="section-line"></div>
+</div>
+
+<div class="weather-card">
+  <div class="weather-left">
+    <div class="city" id="weatherCity">Paris</div>
+    <div class="temp" id="weatherTemp">24°</div>
+    <div class="condition" id="weatherCondition">Partiellement nuageux</div>
+    <div class="weather-details">
+      <div class="weather-detail">
+        <div class="label">Humidité</div>
+        <div class="value" id="humidity">62%</div>
+      </div>
+      <div class="weather-detail">
+        <div class="label">Vent</div>
+        <div class="value" id="wind">14 km/h</div>
+      </div>
+      <div class="weather-detail">
+        <div class="label">Ressenti</div>
+        <div class="value" id="feelsLike">22°</div>
+      </div>
+    </div>
+  </div>
+  <div class="weather-right">
+    <div class="weather-icon" id="weatherIcon">⛅</div>
+  </div>
+</div>
+
+<!-- Prières -->
+<div class="section-header">
+  <div class="section-title">Horaires des prières</div>
+  <div class="section-line"></div>
+</div>
+
+<div class="prayer-list" id="prayerList"></div>
+
+<!-- Countdown -->
+<div class="countdown-card">
+  <div class="countdown-label">Prochaine prière</div>
+  <div class="countdown-name" id="nextName">Maghrib</div>
+  <div class="countdown-timer" id="countdown">–:––</div>
+</div>
+
+<footer>SALATUK × MÉTÉO · GITHUB PAGES</footer>
+
+<script>
+// ─── Prayer times (static demo for Paris, Aug 3) ───────────────────────────
+const PRAYERS = [
+  { name: 'Fajr',    nameAr: 'الفجر',  icon: '🌙', time: '04:18' },
+  { name: 'Dhuhr',   nameAr: 'الظهر',  icon: '☀️', time: '13:39' },
+  { name: 'Asr',     nameAr: 'العصر',  icon: '🌤', time: '17:20' },
+  { name: 'Maghrib', nameAr: 'المغرب', icon: '🌅', time: '21:24' },
+  { name: 'Isha',    nameAr: 'العشاء', icon: '🌌', time: '23:10' },
+];
+
+// ─── Render prayers ─────────────────────────────────────────────────────────
+function timeToMinutes(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function renderPrayers(nowMin) {
+  const list = document.getElementById('prayerList');
+  list.innerHTML = '';
+  let activeIdx = -1;
+
+  for (let i = 0; i < PRAYERS.length; i++) {
+    const start = timeToMinutes(PRAYERS[i].time);
+    const end   = i + 1 < PRAYERS.length ? timeToMinutes(PRAYERS[i+1].time) : 24*60;
+    if (nowMin >= start && nowMin < end) activeIdx = i;
+  }
+
+  PRAYERS.forEach((p, i) => {
+    const pMin = timeToMinutes(p.time);
+    const passed = nowMin > pMin && i !== activeIdx;
+    const active = i === activeIdx;
+    const div = document.createElement('div');
+    div.className = 'prayer-item' + (active ? ' active' : '') + (passed ? ' passed' : '');
+    div.innerHTML = `
+      <div class="prayer-left">
+        <div class="prayer-icon">${p.icon}</div>
+        <div>
+          <div class="prayer-name">${p.name}${active ? '<span class="active-badge">En cours</span>' : ''}</div>
+          <div class="prayer-name-ar">${p.nameAr}</div>
+        </div>
+      </div>
+      <div class="prayer-time">${p.time}</div>
+    `;
+    list.appendChild(div);
+  });
+
+  return activeIdx;
+}
+
+// ─── Countdown to next prayer ───────────────────────────────────────────────
+function updateCountdown(nowMin) {
+  let next = PRAYERS.find(p => timeToMinutes(p.time) > nowMin);
+  if (!next) next = PRAYERS[0]; // wrap to Fajr next day
+
+  document.getElementById('nextName').textContent = next.name + ' · ' + next.nameAr;
+
+  let diff = timeToMinutes(next.time) - nowMin;
+  if (diff < 0) diff += 24 * 60;
+  const h = Math.floor(diff / 60);
+  const m = diff % 60;
+  document.getElementById('countdown').textContent =
+    h > 0 ? `${h}h ${String(m).padStart(2,'0')}min` : `${m} min`;
+}
+
+// ─── Clock ──────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now  = new Date();
+  const h    = String(now.getHours()).padStart(2, '0');
+  const m    = String(now.getMinutes()).padStart(2, '0');
+  const s    = String(now.getSeconds()).padStart(2, '0');
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  document.getElementById('clock').innerHTML = `${h}<span>:</span>${m}`;
+  document.getElementById('clockSub').textContent = `${s}s · heure locale`;
+
+  renderPrayers(nowMin);
+  updateCountdown(nowMin);
+
+  // Date
+  const days = ['Dim.','Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.'];
+  const months = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sep.','oct.','nov.','déc.'];
+  document.getElementById('gregDate').textContent =
+    `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+
+// ─── Geolocation + weather (demo fallback) ──────────────────────────────────
+const weatherConditions = [
+  { icon: '☀️', text: 'Ensoleillé',          temp: 28 },
+  { icon: '⛅', text: 'Partiellement nuageux', temp: 24 },
+  { icon: '🌥', text: 'Nuageux',              temp: 20 },
+  { icon: '🌦', text: 'Averses',              temp: 18 },
+  { icon: '🌙', text: 'Nuit claire',          temp: 16 },
+];
+
+function setWeather(w) {
+  document.getElementById('weatherIcon').textContent = w.icon;
+  document.getElementById('weatherTemp').textContent = w.temp + '°';
+  document.getElementById('weatherCondition').textContent = w.text;
+}
+
+// Pick condition by hour for demo realism
+const hr = new Date().getHours();
+const idx = hr < 6 ? 4 : hr < 12 ? 0 : hr < 16 ? 1 : hr < 19 ? 2 : 4;
+setWeather(weatherConditions[idx]);
+</script>
+</body>
+</html>
