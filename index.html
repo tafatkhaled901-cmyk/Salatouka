@@ -330,12 +330,12 @@
 
 <!-- Bannière activation audio -->
 <div class="audio-warn" id="audioWarn" onclick="testUnlock()">
-  <span style="font-size:22px">🔊</span>
+  <span style="font-size:26px">🔊</span>
   <div style="flex:1;text-align:left">
     <div class="aw-title">Activer le son de l'Adhan</div>
-    <div class="aw-sub">Appuyez ici une fois pour autoriser l'audio</div>
+    <div class="aw-sub">Appuyez ICI une fois — sinon l'Adhan restera muet</div>
   </div>
-  <span style="color:var(--gold);font-size:18px">▶</span>
+  <span style="color:#fbbf24;font-size:20px">▶</span>
 </div>
 
 <!-- ══ MÉTÉO ══ -->
@@ -462,11 +462,27 @@ const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
 const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:21 };
 
 // Adhan — URLs officielles depuis cdn.aladhan.com (CORS OK, 100% fiable)
-const ADHAN_URLS = {
-  makkah:  'https://cdn.aladhan.com/audio/adhans/a4.mp3',   // Mishary Alafasy — Dubai One TV (style Makkah)
-  madinah: 'https://cdn.aladhan.com/audio/adhans/a1.mp3',   // Ahmad al-Nafees (style Madinah)
-  egypt:   'https://cdn.aladhan.com/audio/adhans/a2.mp3',   // Hafiz Mustafa Özcan
-  fajr:    'https://cdn.aladhan.com/audio/adhans/a9.mp3',   // Mishary Alafasy — avec "الصلاة خير من النوم"
+const ADHAN_SOURCES = {
+  makkah: [
+    './adhan-makkah.mp3',
+    'https://cdn.aladhan.com/audio/adhans/a4.mp3',
+    'https://www.islamcan.com/audio/adhan/azan2.mp3',
+  ],
+  madinah: [
+    './adhan-madinah.mp3',
+    'https://cdn.aladhan.com/audio/adhans/a1.mp3',
+    'https://www.islamcan.com/audio/adhan/azan1.mp3',
+  ],
+  egypt: [
+    './adhan-egypt.mp3',
+    'https://cdn.aladhan.com/audio/adhans/a2.mp3',
+    'https://www.islamcan.com/audio/adhan/azan3.mp3',
+  ],
+  fajr: [
+    './adhan-fajr.mp3',
+    'https://cdn.aladhan.com/audio/adhans/a9.mp3',
+    'https://www.islamcan.com/audio/adhan/azan5.mp3',
+  ],
 };
 
 const WMO_ICONS = {0:'☀️',1:'🌤',2:'⛅',3:'🌥',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌨',71:'❄️',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
@@ -480,8 +496,34 @@ let currentTimes   = {};
 let selectedMethod = 'MWL';
 let selectedAdhan  = 'makkah';
 let adhanFired     = {};
-let adhanAudio     = null;
 let adhanCheckInt  = null;
+let adhanTickInt   = null;
+let lastScanMin    = -1;
+
+// Balayage : rattrape toute prière dont la minute est passée sans Adhan
+function scanMissed() {
+  if (!Object.keys(currentTimes).length) return;
+  const now    = new Date();
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+  if (nowMin === lastScanMin) return;
+  const key = todayKey();
+
+  PRAYER_META.filter(p => !p.isSunrise).forEach(p => {
+    const fireKey = `${p.key}-${key}`;
+    if (adhanFired[fireKey]) return;
+    const pMin = timeToMin(currentTimes[p.key]);
+    if (pMin < 0) return;
+    // Prière passée il y a 0 à 10 minutes → on la joue quand même
+    if (nowMin >= pMin && nowMin - pMin <= 10) {
+      adhanFired[fireKey] = true;
+      const t = (p.isFajr && selectedAdhan === 'fajr') ? 'fajr' : selectedAdhan;
+      triggerAdhan(p, currentTimes[p.key], t);
+    }
+    // Prière déjà largement passée → marquer sans jouer
+    if (nowMin - pMin > 10) adhanFired[fireKey] = true;
+  });
+  lastScanMin = nowMin;
+}
 let weatherRefInt  = null;
 let userInteracted = false;
 
@@ -632,8 +674,8 @@ async function loadPrayerTimes() {
     // Adhan watchdog
     adhanFired = {};
     requestNotifPermission();
-    unlockAudio();
     startAdhanWatch();
+    refreshAudioBanner();
 
     closeModal();
     goBtn.innerHTML = 'Afficher les horaires →';
@@ -911,7 +953,9 @@ function todayKey() { return new Date().toISOString().slice(0, 10); }
 
 function startAdhanWatch() {
   if (adhanCheckInt) clearInterval(adhanCheckInt);
-  adhanCheckInt = setInterval(checkAdhan, 3000);
+  adhanCheckInt = setInterval(checkAdhan, 2000);
+  if (adhanTickInt) clearInterval(adhanTickInt);
+  adhanTickInt = setInterval(scanMissed, 20000);
   checkAdhan();
 }
 
@@ -984,96 +1028,136 @@ function triggerAdhan(prayer, time, adhanType) {
   playAdhan(adhanType);
 }
 
-// ══ SYSTÈME DE DÉVERROUILLAGE AUDIO ══
-// Les navigateurs mobiles bloquent l'audio tant que l'utilisateur
-// n'a pas interagi. On "débloque" l'audio au premier tap.
-let audioUnlocked = false;
-let preloadedAudio = {};
+// ══════════════════════════════════════════════════
+//  MOTEUR AUDIO ADHAN — version robuste
+// ══════════════════════════════════════════════════
+let audioUnlocked = false;   // vrai UNIQUEMENT après un vrai geste utilisateur validé
+let audioCtx      = null;
+let adhanEl       = null;    // élément <audio> unique et réutilisé
+let workingSrc    = {};      // { makkah: 'url qui marche' }
 
-function unlockAudio() {
-  if (audioUnlocked) return;
-  // Précharger TOUS les adhans et les débloquer
-  Object.keys(ADHAN_URLS).forEach(key => {
-    const url = ADHAN_URLS[key];
-    if (!url) return;
-    const a = new Audio(url);
-    a.preload = 'auto';
-    a.volume = 0;
-    // Jouer 0.01s en silence puis pause = déblocage
-    a.play().then(() => {
-      a.pause();
-      a.currentTime = 0;
-      a.volume = 1.0;
-      preloadedAudio[key] = a;
-    }).catch(() => {
-      preloadedAudio[key] = a;
-    });
-  });
-  audioUnlocked = true;
-  const st = document.getElementById('adhanStatusText');
-  if (st) st.textContent = `Adhan ${selectedAdhan} prêt ✓ · prières surveillées`;
-  const warn = document.getElementById('audioWarn');
-  if (warn) warn.classList.add('hidden');
+// Un SEUL élément <audio> réutilisé : c'est lui qui porte le "droit de jouer"
+function getAdhanElement() {
+  if (adhanEl) return adhanEl;
+  adhanEl = document.createElement('audio');
+  adhanEl.id = 'adhanPlayer';
+  adhanEl.preload = 'auto';
+  adhanEl.setAttribute('playsinline', '');
+  adhanEl.style.display = 'none';
+  document.body.appendChild(adhanEl);
+  return adhanEl;
 }
 
-// Déclencher le déblocage au tout premier contact
-['touchstart','touchend','click','keydown'].forEach(evt => {
-  document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+// Trouve la première URL qui répond réellement pour un type d'adhan
+async function resolveSource(type) {
+  if (workingSrc[type]) return workingSrc[type];
+  const list = ADHAN_SOURCES[type] || ADHAN_SOURCES.makkah;
+  for (const url of list) {
+    try {
+      const ok = await new Promise(res => {
+        const probe = new Audio();
+        const done = v => { probe.src = ''; res(v); };
+        probe.addEventListener('canplaythrough', () => done(true),  { once: true });
+        probe.addEventListener('loadedmetadata', () => done(true),  { once: true });
+        probe.addEventListener('error',          () => done(false), { once: true });
+        setTimeout(() => done(false), 6000);
+        probe.preload = 'auto';
+        probe.src = url;
+        probe.load();
+      });
+      if (ok) { workingSrc[type] = url; return url; }
+    } catch (e) { /* source suivante */ }
+  }
+  return list[list.length - 1];
+}
+
+// Déblocage — DOIT être appelé depuis un vrai geste utilisateur
+async function unlockAudio() {
+  if (audioUnlocked) return true;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      if (!audioCtx) audioCtx = new AC();
+      if (audioCtx.state === 'suspended') await audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      g.gain.value = 0.0001;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start(0); osc.stop(audioCtx.currentTime + 0.01);
+    }
+  } catch (e) { /* non bloquant */ }
+
+  const el  = getAdhanElement();
+  const src = await resolveSource(selectedAdhan);
+  el.src = src;
+  el.volume = 0;
+  try {
+    await el.play();
+    el.pause();
+    el.currentTime = 0;
+    el.volume = 1;
+    audioUnlocked = true;
+  } catch (e) {
+    audioUnlocked = false;   // ← honnête : on n'a PAS débloqué
+  }
+  refreshAudioBanner();
+  return audioUnlocked;
+}
+
+// Affiche/masque la bannière selon l'état RÉEL
+function refreshAudioBanner() {
+  const warn = document.getElementById('audioWarn');
+  const st   = document.getElementById('adhanStatusText');
+  if (warn) warn.classList.toggle('hidden', audioUnlocked);
+  if (st) st.textContent = audioUnlocked
+    ? `Son activé ✓ · Adhan ${selectedAdhan} · prières surveillées`
+    : `Appuyez sur la bannière pour activer le son`;
+}
+
+// Tout geste utilisateur tente le déblocage tant qu'il n'a pas réussi
+['pointerdown','touchend','click','keydown'].forEach(evt => {
+  document.addEventListener(evt, () => { if (!audioUnlocked) unlockAudio(); }, { passive: true });
 });
 
-function playAdhan(adhanType) {
+// ── Lecture de l'Adhan ──────────────────────────────
+async function playAdhan(adhanType) {
   const type = adhanType || selectedAdhan;
-  const url  = ADHAN_URLS[type];
-  if (!url) return;
+  const el   = getAdhanElement();
+  const btn  = document.getElementById('adhanPlayBtn');
+  if (btn) btn.classList.remove('visible');
 
-  const playBtn = document.getElementById('adhanPlayBtn');
-  if (playBtn) playBtn.classList.remove('visible');
-
-  // Arrêter l'audio en cours
-  if (adhanAudio) { try { adhanAudio.pause(); } catch(e){} adhanAudio = null; }
-
-  // Utiliser l'audio préchargé si dispo (bien plus fiable)
-  if (preloadedAudio[type]) {
-    adhanAudio = preloadedAudio[type];
-    adhanAudio.currentTime = 0;
-  } else {
-    adhanAudio = new Audio(url);
-  }
-  adhanAudio.volume = 1.0;
-  adhanAudio.loop = false;
-
-  const attempt = adhanAudio.play();
-  if (attempt && attempt.catch) {
-    attempt.catch(() => {
-      // Bloqué → afficher le bouton manuel
-      if (playBtn) {
-        playBtn.classList.add('visible');
-        playBtn._adhanType = type;
-      }
-      // Notification système en secours
-      sendPrayerNotification(type);
-    });
+  try {
+    if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
+    const src = await resolveSource(type);
+    if (el.src !== src) el.src = src;
+    el.currentTime = 0;
+    el.volume = 1;
+    el.loop = false;
+    await el.play();
+  } catch (e) {
+    // Audio refusé → bouton manuel + notification + vibration
+    if (btn) { btn.classList.add('visible'); btn._adhanType = type; }
+    sendPrayerNotification(type);
+    if (navigator.vibrate) navigator.vibrate([700,250,700,250,700,250,700]);
   }
 }
 
 // ══ NOTIFICATION SYSTÈME (secours si audio bloqué) ══
-// Test manuel du déverrouillage audio
-function testUnlock() {
-  unlockAudio();
+// Test manuel — appelé par la bannière jaune
+async function testUnlock() {
+  const ok = await unlockAudio();
   requestNotifPermission();
-  const url = ADHAN_URLS[selectedAdhan];
-  if (!url) return;
-  const a = new Audio(url);
-  a.volume = 1.0;
-  a.play().then(() => {
-    // Jouer 2 secondes puis arrêter = confirmation
-    setTimeout(() => { a.pause(); a.currentTime = 0; }, 2500);
-    document.getElementById('audioWarn').classList.add('hidden');
-    const st = document.getElementById('adhanStatusText');
-    if (st) st.textContent = `✓ Son activé · Adhan ${selectedAdhan} prêt`;
-  }).catch(() => {
-    alert("Le navigateur bloque le son.\n\nVérifiez :\n• Le mode silencieux du téléphone\n• Le volume média\n• Autorisez le son pour ce site dans les paramètres du navigateur");
-  });
+  if (!ok) {
+    alert("Le son est bloqué par le téléphone.\n\nVérifiez :\n• Le mode silencieux / vibreur\n• Le volume MÉDIA (pas sonnerie)\n• Chrome : Paramètres du site → Son → Autoriser");
+    return;
+  }
+  const el = getAdhanElement();
+  el.currentTime = 0;
+  el.volume = 1;
+  try {
+    await el.play();
+    setTimeout(() => { el.pause(); el.currentTime = 0; }, 3000);
+  } catch(e) {}
 }
 
 function requestNotifPermission() {
@@ -1100,21 +1184,21 @@ function sendPrayerNotification(type) {
   } catch(e) {}
 }
 
-function forcePlayAdhan() {
-  const playBtn = document.getElementById('adhanPlayBtn');
-  const type = playBtn._adhanType || selectedAdhan;
-  const url  = ADHAN_URLS[type];
-  if (!url || !adhanAudio) {
-    adhanAudio = new Audio(url);
-    adhanAudio.volume = 1.0;
-  }
-  adhanAudio.play();
-  playBtn.classList.remove('visible');
+async function forcePlayAdhan() {
+  const btn  = document.getElementById('adhanPlayBtn');
+  const type = (btn && btn._adhanType) || selectedAdhan;
+  await unlockAudio();
+  const el  = getAdhanElement();
+  const src = await resolveSource(type);
+  if (el.src !== src) el.src = src;
+  el.currentTime = 0;
+  el.volume = 1;
+  try { await el.play(); if (btn) btn.classList.remove('visible'); } catch(e) {}
 }
 
 function dismissAdhan() {
   document.getElementById('adhanBanner').classList.remove('visible');
-  if (adhanAudio) { adhanAudio.pause(); adhanAudio.currentTime = 0; }
+  if (adhanEl) { try { adhanEl.pause(); adhanEl.currentTime = 0; } catch(e) {} }
 }
 
 // ════════════════════════════════════════════════
@@ -1233,6 +1317,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Démarrage
+refreshAudioBanner();
 restoreOrGeolocate();
 </script>
 </body>
