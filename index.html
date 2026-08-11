@@ -190,6 +190,16 @@
     .aw-title{font-size:13px;font-weight:600;color:#fbbf24;}
     .aw-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 
+    /* Diagnostic arrière-plan */
+    .bg-diag{
+      width:calc(100% - 48px);max-width:432px;
+      border-radius:12px;padding:11px 15px;margin-bottom:12px;
+      font-size:12px;line-height:1.6;display:block;
+    }
+    .bg-diag.ok{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.28);color:var(--green-soft);}
+    .bg-diag.err{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+    .bgd-small{font-size:11px;color:var(--muted);}
+
     /* Bouton mode veille */
     .bg-toggle{
       width:calc(100% - 48px);max-width:432px;
@@ -512,6 +522,8 @@
 </div>
 
 
+<div class="bg-diag" id="bgDiag" style="display:none"></div>
+
 <!-- Bouton mode veille -->
 <div class="bg-toggle" id="bgToggle" onclick="toggleBackgroundMode()">
   <span class="bg-icon">🌙</span>
@@ -646,27 +658,12 @@ const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
 const METHOD_MAP = { MWL:2, ISNA:1, Egypt:5, Makkah:4, Algeria:21 };
 
 // Adhan — URLs officielles depuis cdn.aladhan.com (CORS OK, 100% fiable)
+// Fichiers hébergés dans le dépôt : aucun blocage CORS possible
 const ADHAN_SOURCES = {
-  makkah: [
-    './adhan-makkah.mp3',
-    'https://cdn.aladhan.com/audio/adhans/a4.mp3',
-    'https://www.islamcan.com/audio/adhan/azan2.mp3',
-  ],
-  madinah: [
-    './adhan-madinah.mp3',
-    'https://cdn.aladhan.com/audio/adhans/a1.mp3',
-    'https://www.islamcan.com/audio/adhan/azan1.mp3',
-  ],
-  egypt: [
-    './adhan-egypt.mp3',
-    'https://cdn.aladhan.com/audio/adhans/a2.mp3',
-    'https://www.islamcan.com/audio/adhan/azan3.mp3',
-  ],
-  fajr: [
-    './adhan-fajr.mp3',
-    'https://cdn.aladhan.com/audio/adhans/a9.mp3',
-    'https://www.islamcan.com/audio/adhan/azan5.mp3',
-  ],
+  makkah:  ['./adhan-makkah.mp3',  './adhan-madinah.mp3'],
+  madinah: ['./adhan-madinah.mp3', './adhan-makkah.mp3'],
+  egypt:   ['./adhan-egypt.mp3',   './adhan-makkah.mp3'],
+  fajr:    ['./adhan-fajr.mp3',    './adhan-makkah.mp3'],
 };
 
 const WMO_ICONS = {0:'☀️',1:'🌤',2:'⛅',3:'🌥',45:'🌫',48:'🌫',51:'🌦',53:'🌦',55:'🌧',61:'🌧',63:'🌧',65:'🌨',71:'❄️',73:'❄️',75:'❄️',80:'🌦',81:'🌧',82:'⛈',95:'⛈',96:'⛈',99:'⛈'};
@@ -1574,8 +1571,22 @@ async function scheduleAdhansInAudioEngine() {
   });
 
   const st = document.getElementById('adhanStatusText');
-  if (st && count > 0) {
-    st.textContent = `✓ ${count} Adhan programmé${count > 1 ? 's' : ''} · fonctionne écran éteint`;
+  const diag = document.getElementById('bgDiag');
+  if (count > 0) {
+    if (st) st.textContent = `✓ ${count} Adhan programmé${count > 1 ? 's' : ''} · fonctionne écran éteint`;
+    if (diag) {
+      diag.style.display = 'block';
+      diag.className = 'bg-diag ok';
+      diag.innerHTML = `✅ <strong>Arrière-plan actif</strong> — ${count} Adhan programmé${count>1?'s':''} dans le moteur audio.<br>
+        <span class="bgd-small">Source : ${(workingSrc[selectedAdhan]||'').startsWith('./') ? 'fichier local ✓' : 'internet (moins fiable)'}</span>`;
+    }
+  } else {
+    if (diag) {
+      diag.style.display = 'block';
+      diag.className = 'bg-diag err';
+      diag.innerHTML = `⚠️ <strong>Arrière-plan impossible</strong> — le fichier Adhan n'a pas pu être chargé.<br>
+        <span class="bgd-small">L'Adhan ne sonnera que si l'application est ouverte à l'écran. Voir la solution ci-dessous.</span>`;
+    }
   }
   return count;
 }

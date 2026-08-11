@@ -1,5 +1,5 @@
 // Service Worker — Salatuk × Météo v4
-const CACHE_NAME = 'salatuk-v4';
+const CACHE_NAME = 'salatuk-v5';
 const OFFLINE_URL = './index.html';
 
 const ASSETS = [
@@ -9,6 +9,10 @@ const ASSETS = [
   './icon-512.png',
   './icon-96.png',
   './favicon.ico',
+  './adhan-makkah.mp3',
+  './adhan-madinah.mp3',
+  './adhan-egypt.mp3',
+  './adhan-fajr.mp3',
 ];
 
 self.addEventListener('install', e => {
