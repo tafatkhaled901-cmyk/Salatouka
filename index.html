@@ -190,6 +190,35 @@
     .aw-title{font-size:13px;font-weight:600;color:#fbbf24;}
     .aw-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 
+    /* Bouton mode veille */
+    .bg-toggle{
+      width:calc(100% - 48px);max-width:432px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:14px;padding:13px 16px;margin-bottom:12px;
+      display:flex;align-items:center;gap:12px;cursor:pointer;
+      -webkit-tap-highlight-color:transparent;transition:all .2s;
+    }
+    .bg-toggle.bg-on{
+      background:linear-gradient(135deg,rgba(34,197,94,.10),rgba(34,197,94,.04));
+      border-color:rgba(34,197,94,.45);
+    }
+    .bg-icon{font-size:22px;}
+    .bg-title{font-size:13px;font-weight:600;color:var(--text);}
+    .bg-toggle.bg-on .bg-title{color:var(--green-soft);}
+    .bg-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+    .bg-switch{
+      width:40px;height:22px;border-radius:20px;flex-shrink:0;
+      background:var(--border);position:relative;transition:background .2s;
+    }
+    .bg-switch::after{
+      content:'';position:absolute;top:3px;left:3px;
+      width:16px;height:16px;border-radius:50%;
+      background:var(--muted);transition:all .2s;
+    }
+    .bg-toggle.bg-on .bg-switch{background:rgba(34,197,94,.35);}
+    .bg-toggle.bg-on .bg-switch::after{left:21px;background:var(--green);}
+
     .section-header{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:10px;margin-bottom:10px;}
     .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .section-line{flex:1;height:1px;background:var(--border);}
@@ -336,6 +365,17 @@
     <div class="aw-sub">Appuyez ICI une fois — sinon l'Adhan restera muet</div>
   </div>
   <span style="color:#fbbf24;font-size:20px">▶</span>
+</div>
+
+
+<!-- Bouton mode veille -->
+<div class="bg-toggle" id="bgToggle" onclick="toggleBackgroundMode()">
+  <span class="bg-icon">🌙</span>
+  <div style="flex:1;text-align:left">
+    <div class="bg-title" id="bgToggleText">Activer le mode veille</div>
+    <div class="bg-sub" id="bgToggleSub">Pour entendre l'Adhan quand l'écran s'éteint</div>
+  </div>
+  <span class="bg-switch"></span>
 </div>
 
 <!-- ══ MÉTÉO ══ -->
@@ -498,6 +538,7 @@ let selectedAdhan  = 'makkah';
 let adhanFired     = {};
 let adhanCheckInt  = null;
 let adhanTickInt   = null;
+let scheduledNotifs = [];
 let lastScanMin    = -1;
 
 // Balayage : rattrape toute prière dont la minute est passée sans Adhan
@@ -676,6 +717,7 @@ async function loadPrayerTimes() {
     requestNotifPermission();
     startAdhanWatch();
     refreshAudioBanner();
+    setTimeout(scheduleAllNotifications, 1500);
 
     closeModal();
     goBtn.innerHTML = 'Afficher les horaires →';
@@ -1028,6 +1070,136 @@ function triggerAdhan(prayer, time, adhanType) {
   playAdhan(adhanType);
 }
 
+
+// ══════════════════════════════════════════════════
+//  MODE VEILLE — garder l'app active en arrière-plan
+// ══════════════════════════════════════════════════
+// Android/iOS gèlent les pages en arrière-plan SAUF si un média joue.
+// On joue donc un son silencieux en boucle : l'OS considère l'app
+// comme "lecteur multimédia actif" et ne la gèle pas.
+let keepAliveEl = null;
+let wakeLock    = null;
+let backgroundMode = false;
+
+// Génère un WAV silencieux de 1 seconde en mémoire (aucun fichier requis)
+function makeSilentWav() {
+  const sr = 8000, sec = 1, n = sr * sec;
+  const buf = new ArrayBuffer(44 + n * 2);
+  const v = new DataView(buf);
+  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE');
+  w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true); v.setUint32(24, sr, true);
+  v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  w(36, 'data'); v.setUint32(40, n * 2, true);
+  // échantillon quasi-nul (inaudible mais non vide → l'OS le voit comme audio actif)
+  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, (i % 2) ? 1 : -1, true);
+  const blob = new Blob([buf], { type: 'audio/wav' });
+  return URL.createObjectURL(blob);
+}
+
+async function startBackgroundMode() {
+  if (backgroundMode) return true;
+  try {
+    if (!keepAliveEl) {
+      keepAliveEl = document.createElement('audio');
+      keepAliveEl.id = 'keepAlive';
+      keepAliveEl.loop = true;
+      keepAliveEl.volume = 0.001;
+      keepAliveEl.setAttribute('playsinline', '');
+      keepAliveEl.style.display = 'none';
+      keepAliveEl.src = makeSilentWav();
+      document.body.appendChild(keepAliveEl);
+    }
+    await keepAliveEl.play();
+    backgroundMode = true;
+
+    // MediaSession : l'app apparaît comme lecteur actif dans les notifications
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title:  'صلاتك — Adhan actif',
+        artist: 'Surveillance des heures de prière',
+        album:  'Salatuk × Météo',
+        artwork: [
+          { src: './icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: './icon-512.png', sizes: '512x512', type: 'image/png' },
+        ]
+      });
+      navigator.mediaSession.playbackState = 'playing';
+      try {
+        navigator.mediaSession.setActionHandler('pause', () => {});
+        navigator.mediaSession.setActionHandler('play',  () => {});
+      } catch(e) {}
+    }
+    updateBgBadge();
+    return true;
+  } catch (e) {
+    backgroundMode = false;
+    updateBgBadge();
+    return false;
+  }
+}
+
+function stopBackgroundMode() {
+  if (keepAliveEl) { try { keepAliveEl.pause(); } catch(e) {} }
+  backgroundMode = false;
+  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+  releaseWakeLock();
+  updateBgBadge();
+}
+
+// Wake Lock : empêche l'écran de s'éteindre (optionnel)
+async function requestWakeLock() {
+  try {
+    if ('wakeLock' in navigator) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) {}
+}
+function releaseWakeLock() {
+  try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e) {}
+}
+
+// Si l'OS coupe quand même le son silencieux, on le relance au réveil
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (backgroundMode && keepAliveEl && keepAliveEl.paused) {
+      keepAliveEl.play().catch(() => {});
+    }
+    if (wakeLock === null && bgWanted) requestWakeLock();
+  }
+});
+
+let bgWanted = false;
+
+function updateBgBadge() {
+  const b = document.getElementById('bgToggle');
+  if (!b) return;
+  b.classList.toggle('bg-on', backgroundMode);
+  const t = document.getElementById('bgToggleText');
+  const s = document.getElementById('bgToggleSub');
+  if (t) t.textContent = backgroundMode ? 'Mode veille ACTIVÉ' : 'Activer le mode veille';
+  if (s) s.textContent = backgroundMode
+    ? "L'Adhan sonnera même écran éteint"
+    : "Pour entendre l'Adhan quand l'écran s'éteint";
+}
+
+async function toggleBackgroundMode() {
+  if (backgroundMode) {
+    bgWanted = false;
+    stopBackgroundMode();
+    return;
+  }
+  bgWanted = true;
+  await unlockAudio();
+  const ok = await startBackgroundMode();
+  await requestWakeLock();
+  if (!ok) {
+    alert("Impossible d'activer le mode veille.\n\nAppuyez d'abord sur la bannière jaune pour activer le son.");
+  }
+}
+
 // ══════════════════════════════════════════════════
 //  MOTEUR AUDIO ADHAN — version robuste
 // ══════════════════════════════════════════════════
@@ -1101,6 +1273,7 @@ async function unlockAudio() {
     audioUnlocked = false;   // ← honnête : on n'a PAS débloqué
   }
   refreshAudioBanner();
+  if (audioUnlocked && bgWanted) startBackgroundMode();
   return audioUnlocked;
 }
 
@@ -1158,6 +1331,10 @@ async function testUnlock() {
     await el.play();
     setTimeout(() => { el.pause(); el.currentTime = 0; }, 3000);
   } catch(e) {}
+  // Activer le mode veille dans la foulée
+  bgWanted = true;
+  await startBackgroundMode();
+  await requestWakeLock();
 }
 
 function requestNotifPermission() {
@@ -1165,6 +1342,38 @@ function requestNotifPermission() {
   if (Notification.permission === 'default') {
     Notification.requestPermission();
   }
+}
+
+// Programme une notification pour chaque prière restante du jour
+function scheduleAllNotifications() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (!Object.keys(currentTimes).length) return;
+  scheduledNotifs.forEach(id => clearTimeout(id));
+  scheduledNotifs = [];
+
+  const now    = new Date();
+  const nowMs  = now.getTime();
+  PRAYER_META.filter(p => !p.isSunrise).forEach(p => {
+    const t = currentTimes[p.key];
+    if (!t) return;
+    const [ph, pm] = t.replace(/\s*(AM|PM).*/i,'').trim().split(':').map(Number);
+    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ph, pm, 0);
+    const delay = target.getTime() - nowMs;
+    if (delay > 0 && delay < 24 * 3600 * 1000) {
+      const id = setTimeout(() => {
+        try {
+          new Notification('🕌 ' + p.key + ' · ' + p.nameAr, {
+            body: 'حان وقت الصلاة — ' + t,
+            icon: './icon-192.png',
+            tag: 'salatuk-' + p.key,
+            requireInteraction: true,
+            vibrate: [700,250,700,250,700]
+          });
+        } catch(e) {}
+      }, delay);
+      scheduledNotifs.push(id);
+    }
+  });
 }
 
 function sendPrayerNotification(type) {
