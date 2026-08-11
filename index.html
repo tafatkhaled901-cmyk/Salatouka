@@ -219,6 +219,71 @@
     .bg-toggle.bg-on .bg-switch{background:rgba(34,197,94,.35);}
     .bg-toggle.bg-on .bg-switch::after{left:21px;background:var(--green);}
 
+    /* Panneau batterie */
+    .batt-modal{position:fixed;inset:0;background:rgba(5,8,20,.96);z-index:350;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);}
+    .batt-modal.hidden{display:none;}
+    .batt-box{background:#111827;border:1px solid #1e2d45;border-radius:26px 26px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:22px 22px 32px;}
+    .batt-head{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+    .batt-title{font-size:16px;font-weight:600;color:var(--text);}
+    .batt-sub{font-size:11px;color:#fbbf24;margin-top:2px;}
+    .batt-close{margin-left:auto;background:rgba(255,255,255,.08);border:none;color:var(--text);border-radius:50%;width:34px;height:34px;font-size:16px;cursor:pointer;}
+    .batt-intro{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px;}
+    .batt-step{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;font-size:13px;color:var(--muted);line-height:1.5;}
+    .batt-step strong{color:var(--text);}
+    .batt-n{width:24px;height:24px;border-radius:50%;flex-shrink:0;background:rgba(201,168,76,.12);border:1px solid var(--gold);color:var(--gold);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .batt-hint{font-size:11px;color:#5a6a8a;display:block;margin-top:3px;}
+    .batt-warn{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 14px;font-size:12px;color:#fbbf24;line-height:1.6;margin:16px 0;}
+    .batt-ok{width:100%;background:var(--gold);color:#0a0f1e;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;}
+
+    /* ══ ÉCRAN PLEIN PRIÈRE ══ */
+    .prayer-screen{
+      position:fixed;inset:0;z-index:500;
+      background:radial-gradient(ellipse at 50% 30%,#12203c 0%,#0a0f1e 55%,#060a14 100%);
+      display:none;align-items:center;justify-content:center;
+      padding:32px 24px;overflow-y:auto;
+    }
+    .prayer-screen.visible{display:flex;animation:psIn .5s ease;}
+    @keyframes psIn{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:scale(1);}}
+    .ps-glow{
+      position:absolute;top:8%;left:50%;transform:translateX(-50%);
+      width:340px;height:340px;border-radius:50%;
+      background:radial-gradient(circle,rgba(201,168,76,.18) 0%,transparent 70%);
+      animation:psPulse 3s ease-in-out infinite;pointer-events:none;
+    }
+    @keyframes psPulse{0%,100%{opacity:.5;transform:translateX(-50%) scale(1);}50%{opacity:1;transform:translateX(-50%) scale(1.12);}}
+    .ps-content{position:relative;text-align:center;max-width:400px;width:100%;}
+    .ps-logo{
+      width:96px;height:96px;border-radius:26px;
+      box-shadow:0 0 50px rgba(201,168,76,.4);
+      margin-bottom:20px;animation:psFloat 3.5s ease-in-out infinite;
+    }
+    @keyframes psFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-9px);}}
+    .ps-label{font-family:'Amiri',serif;font-size:20px;color:var(--gold);letter-spacing:1px;}
+    .ps-label-fr{font-size:11px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-top:4px;margin-bottom:26px;}
+    .ps-prayer-ar{
+      font-family:'Amiri',serif;font-size:58px;line-height:1.1;
+      color:var(--gold-soft);text-shadow:0 0 40px rgba(201,168,76,.45);
+    }
+    .ps-prayer-fr{font-size:26px;font-weight:300;color:var(--text);margin-top:6px;letter-spacing:1px;}
+    .ps-time-box{
+      display:inline-flex;align-items:center;gap:12px;
+      background:rgba(201,168,76,.09);border:1px solid rgba(201,168,76,.35);
+      border-radius:50px;padding:12px 26px;margin-top:22px;
+    }
+    .ps-icon{font-size:26px;}
+    .ps-time{font-size:30px;font-weight:300;color:var(--text);letter-spacing:2px;font-variant-numeric:tabular-nums;}
+    .ps-city{font-size:12px;color:var(--muted);margin-top:14px;}
+    .ps-actions{display:flex;flex-direction:column;gap:10px;margin-top:34px;}
+    .ps-btn{
+      width:100%;border:none;border-radius:14px;padding:16px;
+      font-size:15px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .ps-btn-play{background:var(--gold);color:#0a0f1e;display:none;}
+    .ps-btn-play.visible{display:block;}
+    .ps-btn-close{background:rgba(255,255,255,.07);color:var(--text);border:1px solid var(--border);}
+    .ps-dua{font-family:'Amiri',serif;font-size:15px;color:var(--muted);margin-top:28px;opacity:.75;}
+
     .section-header{width:calc(100% - 48px);max-width:432px;display:flex;align-items:center;gap:10px;margin-bottom:10px;}
     .section-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
     .section-line{flex:1;height:1px;background:var(--border);}
@@ -274,6 +339,34 @@
 </head>
 <body>
 
+
+<!-- ══ ÉCRAN PLEIN — HEURE DE LA PRIÈRE ══ -->
+<div class="prayer-screen" id="prayerScreen">
+  <div class="ps-glow"></div>
+  <div class="ps-content">
+    <img src="./icon-192.png" alt="Salatuk" class="ps-logo"/>
+    <div class="ps-label">حان وقت الصلاة</div>
+    <div class="ps-label-fr">C'est l'heure de la prière</div>
+
+    <div class="ps-prayer-ar" id="psAr">الظهر</div>
+    <div class="ps-prayer-fr" id="psFr">El Dohr</div>
+
+    <div class="ps-time-box">
+      <span class="ps-icon" id="psIcon">☀️</span>
+      <span class="ps-time" id="psTime">12:48</span>
+    </div>
+
+    <div class="ps-city" id="psCity">Alger, Algérie</div>
+
+    <div class="ps-actions">
+      <button class="ps-btn ps-btn-play" id="psPlayBtn" onclick="forcePlayAdhan()">▶ Écouter l'Adhan</button>
+      <button class="ps-btn ps-btn-close" onclick="dismissAdhan()">Fermer</button>
+    </div>
+
+    <div class="ps-dua">اللهم صل وسلم على نبينا محمد</div>
+  </div>
+</div>
+
 <!-- ✅ FIX 1 : ADHAN BANNER avec bouton play manuel comme fallback -->
 <div class="adhan-banner" id="adhanBanner">
   <div class="adhan-icon-big" id="adhanBannerIcon">🕌</div>
@@ -287,6 +380,57 @@
     <button class="adhan-close" onclick="dismissAdhan()">✕</button>
     <!-- ✅ FIX 1 : Bouton play si autoplay bloqué -->
     <button class="adhan-play-btn" id="adhanPlayBtn" onclick="forcePlayAdhan()">▶ Adhan</button>
+  </div>
+</div>
+
+
+<!-- Panneau réglages batterie -->
+<div class="batt-modal hidden" id="battModal">
+  <div class="batt-box">
+    <div class="batt-head">
+      <span style="font-size:26px">🔋</span>
+      <div>
+        <div class="batt-title">Réglage indispensable</div>
+        <div class="batt-sub">Sans ça, Android coupe l'Adhan</div>
+      </div>
+      <button class="batt-close" onclick="closeBatt()">✕</button>
+    </div>
+
+    <div class="batt-body">
+      <p class="batt-intro">
+        Android arrête les applications en arrière-plan pour économiser la batterie.
+        Il faut lui dire de laisser Salatuk tranquille.
+      </p>
+
+      <div class="batt-step">
+        <span class="batt-n">1</span>
+        <div>Ouvre <strong>Paramètres</strong> du téléphone</div>
+      </div>
+      <div class="batt-step">
+        <span class="batt-n">2</span>
+        <div><strong>Applications</strong> → cherche <strong>Salatuk</strong></div>
+      </div>
+      <div class="batt-step">
+        <span class="batt-n">3</span>
+        <div><strong>Batterie</strong> → choisis <strong>« Sans restriction »</strong><br>
+        <span class="batt-hint">Xiaomi : « Pas de restrictions » · Samsung : « Illimité » · Huawei : « Gestion manuelle »</span></div>
+      </div>
+      <div class="batt-step">
+        <span class="batt-n">4</span>
+        <div>Active <strong>« Démarrage automatique »</strong> si disponible</div>
+      </div>
+      <div class="batt-step">
+        <span class="batt-n">5</span>
+        <div>Dans les <strong>applications récentes</strong>, appuie sur le <strong>cadenas 🔒</strong> de Salatuk pour la verrouiller</div>
+      </div>
+
+      <div class="batt-warn">
+        ⚠️ Ne balaie jamais l'application hors des applications récentes —
+        c'est la seule chose qui arrête l'Adhan.
+      </div>
+
+      <button class="batt-ok" onclick="closeBatt()">J'ai compris</button>
+    </div>
   </div>
 </div>
 
@@ -373,7 +517,7 @@
   <span class="bg-icon">🌙</span>
   <div style="flex:1;text-align:left">
     <div class="bg-title" id="bgToggleText">Activer le mode veille</div>
-    <div class="bg-sub" id="bgToggleSub">Pour entendre l'Adhan quand l'écran s'éteint</div>
+    <div class="bg-sub" id="bgToggleSub" onclick="event.stopPropagation();openBatt()">Pour entendre l'Adhan quand l'écran s'éteint</div>
   </div>
   <span class="bg-switch"></span>
 </div>
@@ -489,12 +633,12 @@
 // CONSTANTES
 // ════════════════════════════════════════════════
 const PRAYER_META = [
-  { key:'Fajr',    nameAr:'الفجر',   icon:'🌙', isFajr:true  },
-  { key:'Sunrise', nameAr:'الشروق',  icon:'🌄', isSunrise:true },
-  { key:'Dhuhr',   nameAr:'الظهر',   icon:'☀️', isFajr:false },
-  { key:'Asr',     nameAr:'العصر',   icon:'🌤', isFajr:false },
-  { key:'Maghrib', nameAr:'المغرب',  icon:'🌅', isFajr:false },
-  { key:'Isha',    nameAr:'العشاء',  icon:'🌌', isFajr:false },
+  { key:'Fajr',    nameFr:'El Fajr',    nameAr:'الفجر',   icon:'🌙', isFajr:true  },
+  { key:'Sunrise', nameFr:'Chourouk',   nameAr:'الشروق',  icon:'🌄', isSunrise:true },
+  { key:'Dhuhr',   nameFr:'El Dohr',    nameAr:'الظهر',   icon:'☀️', isFajr:false },
+  { key:'Asr',     nameFr:'El Asr',     nameAr:'العصر',   icon:'🌤', isFajr:false },
+  { key:'Maghrib', nameFr:'El Maghreb', nameAr:'المغرب',  icon:'🌅', isFajr:false },
+  { key:'Isha',    nameFr:'El Icha',    nameAr:'العشاء',  icon:'🌌', isFajr:false },
 ];
 
 const SALAT_KEYS = ['Fajr','Dhuhr','Asr','Maghrib','Isha'];
@@ -621,6 +765,8 @@ document.querySelectorAll('[data-adhan]').forEach(c => {
     document.querySelectorAll('[data-adhan]').forEach(x => x.classList.remove('active-a'));
     c.classList.add('active-a');
     selectedAdhan = c.dataset.adhan;
+    adhanBuffer = null; adhanBufferType = null;
+    if (audioUnlocked) rescheduleAll();
   });
 });
 
@@ -717,7 +863,7 @@ async function loadPrayerTimes() {
     requestNotifPermission();
     startAdhanWatch();
     refreshAudioBanner();
-    setTimeout(scheduleAllNotifications, 1500);
+    setTimeout(() => { if (audioUnlocked) rescheduleAll(); else scheduleAllNotifications(); }, 1500);
 
     closeModal();
     goBtn.innerHTML = 'Afficher les horaires →';
@@ -1060,14 +1206,99 @@ function checkAdhan() {
   });
 }
 
+// Affiche uniquement l'écran plein (le son est déjà programmé)
+function showPrayerScreen(prayer, time) {
+  const scr = document.getElementById('prayerScreen');
+  if (!scr) return;
+  document.getElementById('psAr').textContent   = prayer.nameAr;
+  document.getElementById('psFr').textContent   = prayer.nameFr || prayer.key;
+  document.getElementById('psIcon').textContent = prayer.icon;
+  document.getElementById('psTime').textContent = time;
+  document.getElementById('psCity').textContent =
+    currentCity ? `${currentCity.name}, ${currentCity.country}` : '';
+  const pb = document.getElementById('psPlayBtn');
+  if (pb) pb.classList.remove('visible');
+  scr.classList.add('visible');
+}
+
 function triggerAdhan(prayer, time, adhanType) {
-  document.getElementById('adhanBannerIcon').textContent  = prayer.icon;
-  document.getElementById('adhanPrayerName').textContent  = prayer.key;
-  document.getElementById('adhanPrayerAr').textContent    = prayer.nameAr;
-  document.getElementById('adhanPrayerTime').textContent  = time;
-  document.getElementById('adhanBanner').classList.add('visible');
-  if (navigator.vibrate) navigator.vibrate([600, 200, 600, 200, 600]);
+  // ── Écran plein dans l'app ──
+  const scr = document.getElementById('prayerScreen');
+  document.getElementById('psAr').textContent   = prayer.nameAr;
+  document.getElementById('psFr').textContent   = prayer.nameFr || prayer.key;
+  document.getElementById('psIcon').textContent = prayer.icon;
+  document.getElementById('psTime').textContent = time;
+  document.getElementById('psCity').textContent =
+    currentCity ? `${currentCity.name}, ${currentCity.country}` : '';
+  const pb = document.getElementById('psPlayBtn');
+  if (pb) { pb.classList.remove('visible'); pb._adhanType = adhanType; }
+  if (scr) scr.classList.add('visible');
+
+  // ── Ancienne bannière (compatibilité) ──
+  const b = document.getElementById('adhanBanner');
+  if (b) {
+    const bi = document.getElementById('adhanBannerIcon');
+    const bn = document.getElementById('adhanPrayerName');
+    const ba = document.getElementById('adhanPrayerAr');
+    const bt = document.getElementById('adhanPrayerTime');
+    if (bi) bi.textContent = prayer.icon;
+    if (bn) bn.textContent = prayer.nameFr || prayer.key;
+    if (ba) ba.textContent = prayer.nameAr;
+    if (bt) bt.textContent = time;
+  }
+
+  // ── Notification système avec logo (écran verrouillé) ──
+  showPrayerNotification(prayer, time);
+
+  // ── Vibration ──
+  if (navigator.vibrate) navigator.vibrate([800,300,800,300,800,300,800]);
+
+  // ── Son ──
   playAdhan(adhanType);
+
+  // ── Réveiller l'écran si possible ──
+  requestWakeLock();
+}
+
+// Notification riche avec le logo de l'application
+function showPrayerNotification(prayer, time) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const title = `🕌 ${prayer.nameFr || prayer.key} · ${prayer.nameAr}`;
+  const body  = `حان وقت الصلاة — ${time}\n${currentCity ? currentCity.name : ''}`;
+  const opts  = {
+    body,
+    icon:  './icon-192.png',
+    badge: './icon-96.png',
+    image: './icon-512.png',
+    tag:   'salatuk-prayer',
+    renotify: true,
+    requireInteraction: true,
+    silent: false,
+    vibrate: [800,300,800,300,800],
+    dir: 'auto',
+    lang: 'fr',
+    data: { url: './', prayer: prayer.key },
+    actions: [
+      { action: 'open', title: 'Ouvrir' },
+      { action: 'stop', title: 'Arrêter' }
+    ]
+  };
+  // Via le Service Worker (persiste même app fermée) sinon direct
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    try {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'PRAYER_NOTIFICATION', title, options: opts
+      });
+      return;
+    } catch(e) {}
+  }
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.ready
+      .then(reg => reg.showNotification(title, opts))
+      .catch(() => { try { new Notification(title, opts); } catch(e) {} });
+  } else {
+    try { new Notification(title, opts); } catch(e) {}
+  }
 }
 
 
@@ -1173,6 +1404,12 @@ document.addEventListener('visibilitychange', () => {
 
 let bgWanted = false;
 
+function openBatt(){ document.getElementById('battModal').classList.remove('hidden'); }
+function closeBatt(){
+  document.getElementById('battModal').classList.add('hidden');
+  try { localStorage.setItem('salatuk_batt_seen','1'); } catch(e) {}
+}
+
 function updateBgBadge() {
   const b = document.getElementById('bgToggle');
   if (!b) return;
@@ -1197,8 +1434,164 @@ async function toggleBackgroundMode() {
   await requestWakeLock();
   if (!ok) {
     alert("Impossible d'activer le mode veille.\n\nAppuyez d'abord sur la bannière jaune pour activer le son.");
+    return;
   }
+  let seen = null;
+  try { seen = localStorage.getItem('salatuk_batt_seen'); } catch(e) {}
+  if (!seen) openBatt();
 }
+
+
+// ════════════════════════════════════════════════════════════
+//  PLANIFICATEUR AUDIO — l'Adhan sonne même écran éteint
+// ════════════════════════════════════════════════════════════
+// PRINCIPE : le téléphone gèle les minuteries (setTimeout/setInterval)
+// dès que l'écran s'éteint. MAIS il ne gèle JAMAIS l'horloge interne
+// du moteur audio (AudioContext) tant qu'un son est en cours.
+// On décode donc l'Adhan en mémoire et on le PROGRAMME dans le moteur
+// audio à l'instant exact de la prière. Aucune minuterie n'est utilisée.
+
+let adhanBuffer     = null;   // l'Adhan décodé en mémoire
+let adhanBufferType = null;
+let scheduledNodes  = [];     // sources audio programmées
+let silentNode      = null;   // bourdon silencieux qui garde le moteur éveillé
+let masterGain      = null;
+
+function ensureCtx() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return null;
+  if (!audioCtx) {
+    audioCtx = new AC();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 1.0;
+    masterGain.connect(audioCtx.destination);
+  }
+  return audioCtx;
+}
+
+// Bourdon inaudible permanent : empêche le moteur audio de s'endormir
+function startSilentCarrier() {
+  const ctx = ensureCtx();
+  if (!ctx || silentNode) return;
+  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (i % 2 ? 1 : -1) * 0.00002;
+  silentNode = ctx.createBufferSource();
+  silentNode.buffer = buf;
+  silentNode.loop = true;
+  const g = ctx.createGain();
+  g.gain.value = 0.00002;
+  silentNode.connect(g); g.connect(ctx.destination);
+  try { silentNode.start(0); } catch (e) {}
+}
+
+// Télécharge et décode l'Adhan une seule fois
+async function loadAdhanBuffer(type) {
+  const ctx = ensureCtx();
+  if (!ctx) return null;
+  if (adhanBuffer && adhanBufferType === type) return adhanBuffer;
+  const list = ADHAN_SOURCES[type] || ADHAN_SOURCES.makkah;
+  for (const url of list) {
+    try {
+      const res = await fetch(url, { mode: 'cors' });
+      if (!res.ok) continue;
+      const arr = await res.arrayBuffer();
+      const buf = await ctx.decodeAudioData(arr.slice(0));
+      adhanBuffer = buf;
+      adhanBufferType = type;
+      workingSrc[type] = url;
+      return buf;
+    } catch (e) { /* source suivante */ }
+  }
+  return null;
+}
+
+function clearScheduled() {
+  scheduledNodes.forEach(n => { try { n.stop(); } catch (e) {} });
+  scheduledNodes = [];
+}
+
+// Programme TOUTES les prières restantes du jour dans le moteur audio
+async function scheduleAdhansInAudioEngine() {
+  const ctx = ensureCtx();
+  if (!ctx || !Object.keys(currentTimes).length) return 0;
+  if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
+
+  startSilentCarrier();
+  clearScheduled();
+
+  const normal = await loadAdhanBuffer(selectedAdhan);
+  if (!normal) return 0;
+  let fajrBuf = normal;
+  if (selectedAdhan === 'fajr') fajrBuf = normal;
+
+  const now = new Date();
+  let count = 0;
+
+  PRAYER_META.filter(p => !p.isSunrise).forEach(p => {
+    const t = currentTimes[p.key];
+    if (!t) return;
+    const [ph, pm] = t.replace(/\s*(AM|PM).*/i, '').trim().split(':').map(Number);
+    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ph, pm, 0, 0);
+    const secs = (target.getTime() - now.getTime()) / 1000;
+    if (secs <= 0 || secs > 24 * 3600) return;
+
+    const src = ctx.createBufferSource();
+    src.buffer = fajrBuf;
+    const g = ctx.createGain();
+    g.gain.value = 1.0;
+    src.connect(g); g.connect(ctx.destination);
+
+    // Déclencheur visuel : un buffer muet qui SE TERMINE à l'heure exacte.
+    // Son événement 'onended' vient du moteur audio, jamais gelé.
+    const trig = ctx.createBufferSource();
+    const tb = ctx.createBuffer(1, Math.max(1, Math.floor(ctx.sampleRate * 0.05)), ctx.sampleRate);
+    trig.buffer = tb;
+    const tg = ctx.createGain();
+    tg.gain.value = 0;
+    trig.connect(tg); tg.connect(ctx.destination);
+    trig.onended = () => {
+      const key = todayKey();
+      const fk  = `${p.key}-${key}`;
+      if (adhanFired[fk]) return;
+      adhanFired[fk] = true;
+      showPrayerScreen(p, t);
+      showPrayerNotification(p, t);
+      if (navigator.vibrate) navigator.vibrate([800,300,800,300,800,300,800]);
+      requestWakeLock();
+    };
+
+    try {
+      const when = ctx.currentTime + secs;
+      src.start(when);
+      src._started = true;
+      src._prayer = p;
+      src._time = t;
+      trig.start(Math.max(ctx.currentTime, when - 0.05));
+      scheduledNodes.push(src, trig);
+      count++;
+    } catch (e) {}
+  });
+
+  const st = document.getElementById('adhanStatusText');
+  if (st && count > 0) {
+    st.textContent = `✓ ${count} Adhan programmé${count > 1 ? 's' : ''} · fonctionne écran éteint`;
+  }
+  return count;
+}
+
+// Reprogrammer quand l'app revient au premier plan ou change de réglage
+async function rescheduleAll() {
+  await scheduleAdhansInAudioEngine();
+  scheduleAllNotifications();
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+    if (audioUnlocked) rescheduleAll();
+  }
+});
 
 // ══════════════════════════════════════════════════
 //  MOTEUR AUDIO ADHAN — version robuste
@@ -1273,7 +1666,11 @@ async function unlockAudio() {
     audioUnlocked = false;   // ← honnête : on n'a PAS débloqué
   }
   refreshAudioBanner();
-  if (audioUnlocked && bgWanted) startBackgroundMode();
+  if (audioUnlocked) {
+    startSilentCarrier();
+    startBackgroundMode();
+    rescheduleAll();
+  }
   return audioUnlocked;
 }
 
@@ -1309,8 +1706,9 @@ async function playAdhan(adhanType) {
     await el.play();
   } catch (e) {
     // Audio refusé → bouton manuel + notification + vibration
+    const pb = document.getElementById('psPlayBtn');
+    if (pb) { pb.classList.add('visible'); pb._adhanType = type; }
     if (btn) { btn.classList.add('visible'); btn._adhanType = type; }
-    sendPrayerNotification(type);
     if (navigator.vibrate) navigator.vibrate([700,250,700,250,700,250,700]);
   }
 }
@@ -1394,7 +1792,7 @@ function sendPrayerNotification(type) {
 }
 
 async function forcePlayAdhan() {
-  const btn  = document.getElementById('adhanPlayBtn');
+  const btn  = document.getElementById('psPlayBtn') || document.getElementById('adhanPlayBtn');
   const type = (btn && btn._adhanType) || selectedAdhan;
   await unlockAudio();
   const el  = getAdhanElement();
@@ -1406,8 +1804,24 @@ async function forcePlayAdhan() {
 }
 
 function dismissAdhan() {
-  document.getElementById('adhanBanner').classList.remove('visible');
+  const scr = document.getElementById('prayerScreen');
+  if (scr) scr.classList.remove('visible');
+  const b = document.getElementById('adhanBanner');
+  if (b) b.classList.remove('visible');
   if (adhanEl) { try { adhanEl.pause(); adhanEl.currentTime = 0; } catch(e) {} }
+  clearScheduledNow();
+  releaseWakeLock();
+}
+
+// Arrête l'Adhan en cours de lecture depuis le moteur audio
+function clearScheduledNow() {
+  scheduledNodes = scheduledNodes.filter(n => {
+    try {
+      // Ne stoppe que ceux déjà démarrés
+      if (n._started) { n.stop(); return false; }
+    } catch(e) { return false; }
+    return true;
+  });
 }
 
 // ════════════════════════════════════════════════

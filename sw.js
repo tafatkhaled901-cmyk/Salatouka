@@ -1,7 +1,5 @@
-// Service Worker — Salatuk × Météo v3
-// PWABuilder compatible
-
-const CACHE_NAME = 'salatuk-v3';
+// Service Worker — Salatuk × Météo v4
+const CACHE_NAME = 'salatuk-v4';
 const OFFLINE_URL = './index.html';
 
 const ASSETS = [
@@ -9,71 +7,76 @@ const ASSETS = [
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './icon-96.png',
   './favicon.ico',
-  './favicon-180.png',
-  './og-image.png',
 ];
 
-// ── Install ──────────────────────────────────────
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
-    }).then(() => self.skipWaiting())
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// ── Activate ─────────────────────────────────────
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      )
-    ).then(() => self.clients.claim())
-  );
-});
-
-// ── Fetch — Network first, cache fallback ────────
-self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
-
-  // APIs externes → network only
-  const url = new URL(event.request.url);
-  const isExternal = !url.origin.includes('github.io');
-  if (isExternal) {
-    event.respondWith(fetch(event.request).catch(() => new Response('')));
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if (!url.origin.includes(self.location.origin)) {
+    e.respondWith(fetch(e.request).catch(() => new Response('')));
     return;
   }
-
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return response;
+  e.respondWith(
+    fetch(e.request)
+      .then(r => {
+        const clone = r.clone();
+        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        return r;
       })
-      .catch(() => caches.match(event.request).then(r => r || caches.match(OFFLINE_URL)))
+      .catch(() => caches.match(e.request).then(r => r || caches.match(OFFLINE_URL)))
   );
 });
 
-// ── Push Notifications (pour les prières) ────────
-self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : {};
+// ── Notification de prière envoyée par la page ──
+self.addEventListener('message', event => {
+  const d = event.data || {};
+  if (d.type === 'PRAYER_NOTIFICATION') {
+    self.registration.showNotification(d.title, d.options || {});
+  }
+});
+
+// ── Clic sur la notification : ouvrir / focaliser l'app ──
+self.addEventListener('notificationclick', event => {
+  const action = event.action;
+  event.notification.close();
+  if (action === 'stop') return;
   event.waitUntil(
-    self.registration.showNotification(data.title || 'وقت الصلاة', {
-      body: data.body || 'حان وقت الصلاة',
-      icon: './icon-192.png',
-      badge: './favicon-32.png',
-      tag: 'prayer-time',
-      renotify: true,
-      vibrate: [500, 200, 500, 200, 500],
-      data: { url: './' }
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });
 
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  event.waitUntil(clients.openWindow('./'));
+// ── Push (si un serveur en envoie un jour) ──
+self.addEventListener('push', event => {
+  let d = {};
+  try { d = event.data ? event.data.json() : {}; } catch (e) {}
+  event.waitUntil(
+    self.registration.showNotification(d.title || '🕌 وقت الصلاة', {
+      body: d.body || 'حان وقت الصلاة',
+      icon: './icon-192.png',
+      badge: './icon-96.png',
+      image: './icon-512.png',
+      tag: 'salatuk-prayer',
+      requireInteraction: true,
+      vibrate: [800, 300, 800, 300, 800],
+    })
+  );
 });
