@@ -1421,9 +1421,11 @@ function runDiagnostic() {
   if (ctx) line(ctx.state === 'running', `État moteur : ${ctx.state}` + (ctx.state!=='running' ? ' — Android l\'a suspendu' : ''));
   line(!!silentNode, silentNode ? 'Porteuse audio active' : 'Porteuse inactive');
   line(!!mediaDest, mediaDest ? 'Flux média branché' : 'Flux média absent (navigateur trop ancien)');
-  line(el && !el.paused, (el && !el.paused) ? 'Lecteur média EN LECTURE' : 'Lecteur média en pause — Android ne protégera pas l\'app');
+  const cEl = carrierEl;
+  line(cEl && !cEl.paused, (cEl && !cEl.paused) ? 'Lecteur média EN LECTURE' : 'Lecteur média en pause — appuyez sur Mode veille');
   line(!!adhanBuffer, adhanBuffer ? `Adhan chargé (${Math.round(adhanBuffer.duration)}s)` : 'Adhan NON chargé — vérifiez les fichiers MP3');
-  const n = scheduledNodes.filter(x=>x.buffer && x.buffer.duration>1).length;
+  const n = scheduledNodes.filter(x => x.buffer && x.buffer.duration > 1).length;
+  const carrier = carrierEl;
   line(n>0, n>0 ? `${n} Adhan(s) programmé(s)` : 'Aucun Adhan programmé');
   const notif = ('Notification' in window) ? Notification.permission : 'absent';
   line(notif==='granted', `Notifications : ${notif}`);
@@ -1431,7 +1433,7 @@ function runDiagnostic() {
 
   if (ctx && ctx.state !== 'running') {
     L.push('<div class="dg-fix">🔧 Android a suspendu le moteur audio.<br>C\'est le réglage <strong>batterie</strong> qui manque — voir le panneau 🔋</div>');
-  } else if (el && el.paused) {
+  } else if (cEl && cEl.paused) {
     L.push('<div class="dg-fix">🔧 Le lecteur média est en pause.<br>Appuyez sur <strong>Mode veille</strong> pour le relancer.</div>');
   } else if (!adhanBuffer) {
     L.push('<div class="dg-fix">🔧 Les fichiers <strong>adhan-*.mp3</strong> ne sont pas accessibles.<br>Vérifiez qu\'ils sont bien sur GitHub.</div>');
@@ -1559,9 +1561,8 @@ function routeThroughMediaElement() {
   masterGain.connect(mediaDest);          // tout passe par le flux média
   masterGain.connect(ctx.destination);    // et aussi par la sortie directe
 
-  const el = getAdhanElement();
+  const el = getCarrierElement();
   el.srcObject = mediaDest.stream;
-  el.loop = false;
   el.volume = 1.0;
   el.play().catch(() => {});
 
@@ -1731,6 +1732,22 @@ let adhanEl       = null;    // élément <audio> unique et réutilisé
 let workingSrc    = {};      // { makkah: 'url qui marche' }
 
 // Un SEUL élément <audio> réutilisé : c'est lui qui porte le "droit de jouer"
+// Élément dédié au FLUX MÉDIA (ne reçoit jamais de src fichier)
+let carrierEl = null;
+function getCarrierElement() {
+  if (carrierEl) return carrierEl;
+  carrierEl = document.createElement('audio');
+  carrierEl.id = 'salatukCarrier';
+  carrierEl.preload = 'auto';
+  carrierEl.loop = false;
+  carrierEl.setAttribute('playsinline', '');
+  carrierEl.setAttribute('autoplay', '');
+  carrierEl.style.display = 'none';
+  document.body.appendChild(carrierEl);
+  return carrierEl;
+}
+
+// Élément séparé pour la lecture directe de fichiers MP3
 function getAdhanElement() {
   if (adhanEl) return adhanEl;
   adhanEl = document.createElement('audio');
@@ -1796,9 +1813,10 @@ async function unlockAudio() {
   }
   refreshAudioBanner();
   if (audioUnlocked) {
+    ensureCtx();
     startSilentCarrier();
-    startBackgroundMode();
-    rescheduleAll();
+    await startBackgroundMode();
+    await rescheduleAll();
   }
   return audioUnlocked;
 }
@@ -1846,7 +1864,7 @@ async function playAdhan(adhanType) {
 // Test manuel — appelé par la bannière jaune
 async function testUnlock() {
   const ok = await unlockAudio();
-  requestNotifPermission();
+  await requestNotifPermission();
   if (!ok) {
     alert("Le son est bloqué par le téléphone.\n\nVérifiez :\n• Le mode silencieux / vibreur\n• Le volume MÉDIA (pas sonnerie)\n• Chrome : Paramètres du site → Son → Autoriser");
     return;
@@ -1864,11 +1882,14 @@ async function testUnlock() {
   await requestWakeLock();
 }
 
-function requestNotifPermission() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  try {
+    const r = await Notification.requestPermission();
+    return r === 'granted';
+  } catch (e) { return false; }
 }
 
 // Programme une notification pour chaque prière restante du jour
