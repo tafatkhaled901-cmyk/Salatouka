@@ -229,6 +229,23 @@
     .bg-toggle.bg-on .bg-switch{background:rgba(34,197,94,.35);}
     .bg-toggle.bg-on .bg-switch::after{left:21px;background:var(--green);}
 
+    /* Diagnostic */
+    .dg-modal{position:fixed;inset:0;background:rgba(5,8,20,.96);z-index:360;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);}
+    .dg-modal.hidden{display:none;}
+    .dg-box{background:#111827;border:1px solid #1e2d45;border-radius:26px 26px 0 0;width:100%;max-width:480px;max-height:92vh;overflow-y:auto;padding:22px 22px 30px;}
+    .dg-head{display:flex;align-items:center;gap:12px;padding-bottom:14px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+    .dg-title{font-size:16px;font-weight:600;color:var(--text);}
+    .dg-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+    .dg-body{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+    .dg-row{font-size:12.5px;padding:9px 12px;border-radius:9px;line-height:1.45;}
+    .dg-row.ok{background:rgba(34,197,94,.07);color:var(--green-soft);}
+    .dg-row.ko{background:rgba(239,68,68,.08);color:#fca5a5;}
+    .dg-row.warn{background:rgba(251,191,36,.08);color:#fbbf24;}
+    .dg-fix{background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);border-radius:11px;padding:12px 14px;font-size:12.5px;color:#fbbf24;line-height:1.6;margin-top:6px;}
+    .dg-fix.ok-fix{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:var(--green-soft);}
+    .dg-test{width:100%;background:var(--gold);color:#0a0f1e;border:none;border-radius:12px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px;}
+    .dg-batt{width:100%;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+
     /* Panneau batterie */
     .batt-modal{position:fixed;inset:0;background:rgba(5,8,20,.96);z-index:350;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(10px);}
     .batt-modal.hidden{display:none;}
@@ -394,6 +411,24 @@
 </div>
 
 
+
+<!-- Diagnostic -->
+<div class="dg-modal hidden" id="dgModal">
+  <div class="dg-box">
+    <div class="dg-head">
+      <span style="font-size:24px">🔍</span>
+      <div style="flex:1">
+        <div class="dg-title">Diagnostic arrière-plan</div>
+        <div class="dg-sub">État réel du système audio</div>
+      </div>
+      <button class="batt-close" onclick="closeDiag()">✕</button>
+    </div>
+    <div class="dg-body" id="dgBody"></div>
+    <button class="dg-test" onclick="testBackgroundAdhan()">🔔 Tester : Adhan dans 15 secondes</button>
+    <button class="dg-batt" onclick="closeDiag();openBatt()">🔋 Voir les réglages batterie</button>
+  </div>
+</div>
+
 <!-- Panneau réglages batterie -->
 <div class="batt-modal hidden" id="battModal">
   <div class="batt-box">
@@ -523,6 +558,17 @@
 
 
 <div class="bg-diag" id="bgDiag" style="display:none"></div>
+
+<div class="qibla-btn-wrap" style="margin-bottom:12px">
+  <div class="qibla-btn" onclick="runDiagnostic()" style="border-color:var(--border)">
+    <div class="qibla-btn-icon">🔍</div>
+    <div class="qibla-btn-text">
+      <div class="qt">Diagnostic</div>
+      <div class="qv" style="color:var(--text)">L'Adhan ne sonne pas ? Testez ici</div>
+    </div>
+    <div class="qibla-btn-arrow">›</div>
+  </div>
+</div>
 
 <!-- Bouton mode veille -->
 <div class="bg-toggle" id="bgToggle" onclick="toggleBackgroundMode()">
@@ -1305,62 +1351,21 @@ function showPrayerNotification(prayer, time) {
 // Android/iOS gèlent les pages en arrière-plan SAUF si un média joue.
 // On joue donc un son silencieux en boucle : l'OS considère l'app
 // comme "lecteur multimédia actif" et ne la gèle pas.
-let keepAliveEl = null;
 let wakeLock    = null;
 let backgroundMode = false;
-
-// Génère un WAV silencieux de 1 seconde en mémoire (aucun fichier requis)
-function makeSilentWav() {
-  const sr = 8000, sec = 1, n = sr * sec;
-  const buf = new ArrayBuffer(44 + n * 2);
-  const v = new DataView(buf);
-  const w = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
-  w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE');
-  w(12, 'fmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true);
-  v.setUint16(22, 1, true); v.setUint32(24, sr, true);
-  v.setUint32(28, sr * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
-  w(36, 'data'); v.setUint32(40, n * 2, true);
-  // échantillon quasi-nul (inaudible mais non vide → l'OS le voit comme audio actif)
-  for (let i = 0; i < n; i++) v.setInt16(44 + i * 2, (i % 2) ? 1 : -1, true);
-  const blob = new Blob([buf], { type: 'audio/wav' });
-  return URL.createObjectURL(blob);
-}
 
 async function startBackgroundMode() {
   if (backgroundMode) return true;
   try {
-    if (!keepAliveEl) {
-      keepAliveEl = document.createElement('audio');
-      keepAliveEl.id = 'keepAlive';
-      keepAliveEl.loop = true;
-      keepAliveEl.volume = 0.001;
-      keepAliveEl.setAttribute('playsinline', '');
-      keepAliveEl.style.display = 'none';
-      keepAliveEl.src = makeSilentWav();
-      document.body.appendChild(keepAliveEl);
-    }
-    await keepAliveEl.play();
-    backgroundMode = true;
-
-    // MediaSession : l'app apparaît comme lecteur actif dans les notifications
-    if ('mediaSession' in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title:  'صلاتك — Adhan actif',
-        artist: 'Surveillance des heures de prière',
-        album:  'Salatuk × Météo',
-        artwork: [
-          { src: './icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: './icon-512.png', sizes: '512x512', type: 'image/png' },
-        ]
-      });
-      navigator.mediaSession.playbackState = 'playing';
-      try {
-        navigator.mediaSession.setActionHandler('pause', () => {});
-        navigator.mediaSession.setActionHandler('play',  () => {});
-      } catch(e) {}
-    }
+    const ctx = ensureCtx();
+    if (!ctx) return false;
+    if (ctx.state === 'suspended') await ctx.resume();
+    startSilentCarrier();          // porteuse + routage MediaStream
+    const el = getAdhanElement();
+    if (el.paused) await el.play();
+    backgroundMode = (ctx.state === 'running' && !el.paused);
     updateBgBadge();
-    return true;
+    return backgroundMode;
   } catch (e) {
     backgroundMode = false;
     updateBgBadge();
@@ -1369,7 +1374,8 @@ async function startBackgroundMode() {
 }
 
 function stopBackgroundMode() {
-  if (keepAliveEl) { try { keepAliveEl.pause(); } catch(e) {} }
+  try { if (silentNode) { silentNode.stop(); silentNode = null; } } catch(e) {}
+  try { if (adhanEl) adhanEl.pause(); } catch(e) {}
   backgroundMode = false;
   if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
   releaseWakeLock();
@@ -1392,14 +1398,85 @@ function releaseWakeLock() {
 // Si l'OS coupe quand même le son silencieux, on le relance au réveil
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
-    if (backgroundMode && keepAliveEl && keepAliveEl.paused) {
-      keepAliveEl.play().catch(() => {});
+    if (backgroundMode && adhanEl && adhanEl.paused) {
+      adhanEl.play().catch(() => {});
     }
+    if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
     if (wakeLock === null && bgWanted) requestWakeLock();
   }
 });
 
 let bgWanted = false;
+
+
+// ══ DIAGNOSTIC EN DIRECT ══
+function runDiagnostic() {
+  const ctx = audioCtx;
+  const el  = adhanEl;
+  const L = [];
+  const line = (ok, txt) => L.push(`<div class="dg-row ${ok===null?'warn':(ok?'ok':'ko')}">${ok===null?'⚠️':(ok?'✅':'❌')} ${txt}</div>`);
+
+  line(audioUnlocked, audioUnlocked ? 'Son débloqué' : 'Son NON débloqué — appuyez sur la bannière jaune');
+  line(!!ctx, ctx ? 'Moteur audio créé' : 'Moteur audio absent');
+  if (ctx) line(ctx.state === 'running', `État moteur : ${ctx.state}` + (ctx.state!=='running' ? ' — Android l\'a suspendu' : ''));
+  line(!!silentNode, silentNode ? 'Porteuse audio active' : 'Porteuse inactive');
+  line(!!mediaDest, mediaDest ? 'Flux média branché' : 'Flux média absent (navigateur trop ancien)');
+  line(el && !el.paused, (el && !el.paused) ? 'Lecteur média EN LECTURE' : 'Lecteur média en pause — Android ne protégera pas l\'app');
+  line(!!adhanBuffer, adhanBuffer ? `Adhan chargé (${Math.round(adhanBuffer.duration)}s)` : 'Adhan NON chargé — vérifiez les fichiers MP3');
+  const n = scheduledNodes.filter(x=>x.buffer && x.buffer.duration>1).length;
+  line(n>0, n>0 ? `${n} Adhan(s) programmé(s)` : 'Aucun Adhan programmé');
+  const notif = ('Notification' in window) ? Notification.permission : 'absent';
+  line(notif==='granted', `Notifications : ${notif}`);
+  line(!!wakeLock, wakeLock ? 'Wake Lock actif' : 'Wake Lock inactif (normal si écran éteint)');
+
+  if (ctx && ctx.state !== 'running') {
+    L.push('<div class="dg-fix">🔧 Android a suspendu le moteur audio.<br>C\'est le réglage <strong>batterie</strong> qui manque — voir le panneau 🔋</div>');
+  } else if (el && el.paused) {
+    L.push('<div class="dg-fix">🔧 Le lecteur média est en pause.<br>Appuyez sur <strong>Mode veille</strong> pour le relancer.</div>');
+  } else if (!adhanBuffer) {
+    L.push('<div class="dg-fix">🔧 Les fichiers <strong>adhan-*.mp3</strong> ne sont pas accessibles.<br>Vérifiez qu\'ils sont bien sur GitHub.</div>');
+  } else if (n>0 && ctx.state==='running' && !el.paused) {
+    L.push('<div class="dg-fix ok-fix">✅ Tout est correct.<br>L\'Adhan sonnera écran éteint tant que l\'application reste dans les applications récentes.</div>');
+  }
+
+  document.getElementById('dgBody').innerHTML = L.join('');
+  document.getElementById('dgModal').classList.remove('hidden');
+}
+function closeDiag(){ document.getElementById('dgModal').classList.add('hidden'); }
+
+// Test : programme un Adhan dans 15 secondes pour vérifier écran éteint
+async function testBackgroundAdhan() {
+  await unlockAudio();
+  const ctx = ensureCtx();
+  if (!ctx) { alert('Moteur audio indisponible'); return; }
+  if (ctx.state === 'suspended') await ctx.resume();
+  startSilentCarrier();
+  const buf = await loadAdhanBuffer(selectedAdhan);
+  if (!buf) { alert("Impossible de charger l'Adhan.\nVérifiez les fichiers MP3 sur GitHub."); return; }
+
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const g = ctx.createGain(); g.gain.value = 1.0;
+  src.connect(g); g.connect(masterGain);
+  src.start(ctx.currentTime + 15);
+  scheduledNodes.push(src);
+
+  const p = PRAYER_META[2];
+  const trig = ctx.createBufferSource();
+  trig.buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate*0.05), ctx.sampleRate);
+  const tg = ctx.createGain(); tg.gain.value = 0;
+  trig.connect(tg); tg.connect(masterGain);
+  trig.onended = () => {
+    showPrayerScreen({key:'TEST', nameFr:'TEST', nameAr:'اختبار', icon:'🔔'}, 'Test');
+    showPrayerNotification({key:'TEST', nameFr:'TEST Adhan', nameAr:'اختبار'}, 'maintenant');
+    if (navigator.vibrate) navigator.vibrate([800,300,800]);
+  };
+  trig.start(ctx.currentTime + 14.95);
+  scheduledNodes.push(trig);
+
+  closeDiag();
+  alert("⏱️ Adhan de test programmé dans 15 secondes.\n\nÉTEIGNEZ VOTRE ÉCRAN MAINTENANT et attendez.\n\nSi l'Adhan sonne → tout fonctionne.\nSinon → il faut régler la batterie (panneau 🔋).");
+}
 
 function openBatt(){ document.getElementById('battModal').classList.remove('hidden'); }
 function closeBatt(){
@@ -1466,20 +1543,61 @@ function ensureCtx() {
   return audioCtx;
 }
 
-// Bourdon inaudible permanent : empêche le moteur audio de s'endormir
+// Le moteur audio doit sortir par un <audio> HTML : c'est le SEUL chemin
+// qu'Android/iOS reconnaissent comme "lecture média en cours" et qu'ils
+// refusent donc de suspendre quand l'écran s'éteint.
+let mediaDest   = null;
+let carrierGain = null;
+
+function routeThroughMediaElement() {
+  const ctx = ensureCtx();
+  if (!ctx || mediaDest) return;
+  if (!ctx.createMediaStreamDestination) return;
+
+  mediaDest = ctx.createMediaStreamDestination();
+  masterGain.disconnect();
+  masterGain.connect(mediaDest);          // tout passe par le flux média
+  masterGain.connect(ctx.destination);    // et aussi par la sortie directe
+
+  const el = getAdhanElement();
+  el.srcObject = mediaDest.stream;
+  el.loop = false;
+  el.volume = 1.0;
+  el.play().catch(() => {});
+
+  if ('mediaSession' in navigator) {
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title:  'صلاتك — Adhan programmé',
+        artist: 'Prières surveillées',
+        album:  'Salatuk × Météo',
+        artwork: [{ src: './icon-512.png', sizes: '512x512', type: 'image/png' }]
+      });
+      navigator.mediaSession.playbackState = 'playing';
+    } catch (e) {}
+  }
+}
+
+// Porteuse audible-mais-imperceptible : un souffle très grave à volume
+// minuscule. Assez « réel » pour qu'Android le compte comme média actif.
 function startSilentCarrier() {
   const ctx = ensureCtx();
   if (!ctx || silentNode) return;
-  const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+  const len = Math.floor(ctx.sampleRate * 4);
+  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
   const d = buf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = (i % 2 ? 1 : -1) * 0.00002;
+  for (let i = 0; i < len; i++) {
+    d[i] = Math.sin(2 * Math.PI * 40 * i / ctx.sampleRate) * 0.004;
+  }
   silentNode = ctx.createBufferSource();
   silentNode.buffer = buf;
   silentNode.loop = true;
-  const g = ctx.createGain();
-  g.gain.value = 0.00002;
-  silentNode.connect(g); g.connect(ctx.destination);
+  carrierGain = ctx.createGain();
+  carrierGain.gain.value = 0.004;
+  silentNode.connect(carrierGain);
+  carrierGain.connect(masterGain);
   try { silentNode.start(0); } catch (e) {}
+  routeThroughMediaElement();
 }
 
 // Télécharge et décode l'Adhan une seule fois
@@ -1537,7 +1655,7 @@ async function scheduleAdhansInAudioEngine() {
     src.buffer = fajrBuf;
     const g = ctx.createGain();
     g.gain.value = 1.0;
-    src.connect(g); g.connect(ctx.destination);
+    src.connect(g); g.connect(masterGain);
 
     // Déclencheur visuel : un buffer muet qui SE TERMINE à l'heure exacte.
     // Son événement 'onended' vient du moteur audio, jamais gelé.
@@ -1546,7 +1664,7 @@ async function scheduleAdhansInAudioEngine() {
     trig.buffer = tb;
     const tg = ctx.createGain();
     tg.gain.value = 0;
-    trig.connect(tg); tg.connect(ctx.destination);
+    trig.connect(tg); tg.connect(masterGain);
     trig.onended = () => {
       const key = todayKey();
       const fk  = `${p.key}-${key}`;
