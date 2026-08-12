@@ -243,6 +243,7 @@
     .dg-row.warn{background:rgba(251,191,36,.08);color:#fbbf24;}
     .dg-fix{background:rgba(251,191,36,.09);border:1px solid rgba(251,191,36,.3);border-radius:11px;padding:12px 14px;font-size:12.5px;color:#fbbf24;line-height:1.6;margin-top:6px;}
     .dg-fix.ok-fix{background:rgba(34,197,94,.08);border-color:rgba(34,197,94,.3);color:var(--green-soft);}
+    .dg-notif{width:100%;background:#3b82f6;color:#fff;border:none;border-radius:12px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px;}
     .dg-test{width:100%;background:var(--gold);color:#0a0f1e;border:none;border-radius:12px;padding:15px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:9px;}
     .dg-batt{width:100%;background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
 
@@ -424,7 +425,8 @@
       <button class="batt-close" onclick="closeDiag()">✕</button>
     </div>
     <div class="dg-body" id="dgBody"></div>
-    <button class="dg-test" onclick="testBackgroundAdhan()">🔔 Tester : Adhan dans 15 secondes</button>
+    <button class="dg-notif" id="dgNotifBtn" onclick="askNotif()" style="display:none">🔔 Autoriser les notifications</button>
+    <button class="dg-test" onclick="testBackgroundAdhan()">⏱️ Tester : Adhan dans 15 secondes</button>
     <button class="dg-batt" onclick="closeDiag();openBatt()">🔋 Voir les réglages batterie</button>
   </div>
 </div>
@@ -686,6 +688,11 @@
 
 <script>
 'use strict';
+
+// Déclarations globales anticipées (évite toute zone morte temporelle)
+var carrierEl = null;
+var adhanEl = null;
+var audioCtx = null;
 
 // ════════════════════════════════════════════════
 // CONSTANTES
@@ -1420,7 +1427,7 @@ function runDiagnostic() {
   line(!!ctx, ctx ? 'Moteur audio créé' : 'Moteur audio absent');
   if (ctx) line(ctx.state === 'running', `État moteur : ${ctx.state}` + (ctx.state!=='running' ? ' — Android l\'a suspendu' : ''));
   line(!!silentNode, silentNode ? 'Porteuse audio active' : 'Porteuse inactive');
-  line(!!mediaDest, mediaDest ? 'Flux média branché' : 'Flux média absent (navigateur trop ancien)');
+  line(!!mediaDest, mediaDest ? 'Flux média branché' : ('Flux média absent' + (routeError ? ' — ' + routeError : '')));
   const cEl = carrierEl;
   line(cEl && !cEl.paused, (cEl && !cEl.paused) ? 'Lecteur média EN LECTURE' : 'Lecteur média en pause — appuyez sur Mode veille');
   line(!!adhanBuffer, adhanBuffer ? `Adhan chargé (${Math.round(adhanBuffer.duration)}s)` : 'Adhan NON chargé — vérifiez les fichiers MP3');
@@ -1442,9 +1449,25 @@ function runDiagnostic() {
   }
 
   document.getElementById('dgBody').innerHTML = L.join('');
+  const nb = document.getElementById('dgNotifBtn');
+  if (nb) nb.style.display = (notif === 'granted') ? 'none' : 'block';
   document.getElementById('dgModal').classList.remove('hidden');
 }
 function closeDiag(){ document.getElementById('dgModal').classList.add('hidden'); }
+
+function askNotif() {
+  if (!('Notification' in window)) { alert('Notifications non supportées'); return; }
+  if (Notification.permission === 'denied') {
+    alert("Les notifications ont été refusées.\n\nPour les réactiver :\nChrome → ⋮ → Paramètres du site → Notifications → Autoriser");
+    return;
+  }
+  Notification.requestPermission().then(r => {
+    if (r === 'granted') {
+      new Notification('🕌 Salatuk', { body: 'Notifications activées ✓', icon: './icon-192.png' });
+    }
+    runDiagnostic();
+  });
+}
 
 // Test : programme un Adhan dans 15 secondes pour vérifier écran éteint
 async function testBackgroundAdhan() {
@@ -1506,7 +1529,13 @@ async function toggleBackgroundMode() {
   }
   bgWanted = true;
   await unlockAudio();
+  ensureCtx();
+  if (audioCtx && audioCtx.state === 'suspended') { try { await audioCtx.resume(); } catch(e){} }
+  routeThroughMediaElement();
+  const el = getCarrierElement();
+  if (el && el.paused) { try { await el.play(); } catch(e) {} }
   const ok = await startBackgroundMode();
+  await rescheduleAll();
   await requestWakeLock();
   if (!ok) {
     alert("Impossible d'activer le mode veille.\n\nAppuyez d'abord sur la bannière jaune pour activer le son.");
@@ -1551,20 +1580,32 @@ function ensureCtx() {
 let mediaDest   = null;
 let carrierGain = null;
 
+let routeError = null;
 function routeThroughMediaElement() {
+  routeError = null;
   const ctx = ensureCtx();
-  if (!ctx || mediaDest) return;
-  if (!ctx.createMediaStreamDestination) return;
+  if (!ctx) { routeError = 'pas de moteur audio'; return; }
+  if (mediaDest) return;
+  if (typeof ctx.createMediaStreamDestination !== 'function') {
+    routeError = 'createMediaStreamDestination non supporté';
+    return;
+  }
+  try {
+    mediaDest = ctx.createMediaStreamDestination();
+    try { masterGain.disconnect(); } catch(e) {}
+    masterGain.connect(mediaDest);
+    masterGain.connect(ctx.destination);
 
-  mediaDest = ctx.createMediaStreamDestination();
-  masterGain.disconnect();
-  masterGain.connect(mediaDest);          // tout passe par le flux média
-  masterGain.connect(ctx.destination);    // et aussi par la sortie directe
-
-  const el = getCarrierElement();
-  el.srcObject = mediaDest.stream;
-  el.volume = 1.0;
-  el.play().catch(() => {});
+    const el = getCarrierElement();
+    el.srcObject = mediaDest.stream;
+    el.muted = false;
+    el.volume = 1.0;
+    el.play().catch(err => { routeError = 'play refusé: ' + err.name; });
+  } catch (e) {
+    routeError = e.name + ': ' + e.message;
+    mediaDest = null;
+    return;
+  }
 
   if ('mediaSession' in navigator) {
     try {
@@ -1637,7 +1678,7 @@ async function scheduleAdhansInAudioEngine() {
   clearScheduled();
 
   const normal = await loadAdhanBuffer(selectedAdhan);
-  if (!normal) return 0;
+  if (!normal) { console.warn('Adhan non chargé'); return 0; }
   let fajrBuf = normal;
   if (selectedAdhan === 'fajr') fajrBuf = normal;
 
@@ -1727,13 +1768,9 @@ document.addEventListener('visibilitychange', () => {
 //  MOTEUR AUDIO ADHAN — version robuste
 // ══════════════════════════════════════════════════
 let audioUnlocked = false;   // vrai UNIQUEMENT après un vrai geste utilisateur validé
-let audioCtx      = null;
-let adhanEl       = null;    // élément <audio> unique et réutilisé
 let workingSrc    = {};      // { makkah: 'url qui marche' }
 
 // Un SEUL élément <audio> réutilisé : c'est lui qui porte le "droit de jouer"
-// Élément dédié au FLUX MÉDIA (ne reçoit jamais de src fichier)
-let carrierEl = null;
 function getCarrierElement() {
   if (carrierEl) return carrierEl;
   carrierEl = document.createElement('audio');
@@ -1863,8 +1900,14 @@ async function playAdhan(adhanType) {
 // ══ NOTIFICATION SYSTÈME (secours si audio bloqué) ══
 // Test manuel — appelé par la bannière jaune
 async function testUnlock() {
+  // La demande de notification DOIT être synchrone dans le geste
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(r => {
+      const d = document.getElementById('dgBody');
+      if (d) runDiagnostic();
+    });
+  }
   const ok = await unlockAudio();
-  await requestNotifPermission();
   if (!ok) {
     alert("Le son est bloqué par le téléphone.\n\nVérifiez :\n• Le mode silencieux / vibreur\n• Le volume MÉDIA (pas sonnerie)\n• Chrome : Paramètres du site → Son → Autoriser");
     return;
