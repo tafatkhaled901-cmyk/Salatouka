@@ -1,5 +1,5 @@
 // Service Worker — Salatuk × Météo v4
-const CACHE_NAME = 'salatuk-v5';
+const CACHE_NAME = 'salatuk-v6';
 const OFFLINE_URL = './index.html';
 
 const ASSETS = [
@@ -37,8 +37,11 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(r => {
-        const clone = r.clone();
-        caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        // ne mettre en cache que les réponses complètes (pas les morceaux 206 des MP3)
+        if (r.ok && r.status === 200) {
+          const clone = r.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone)).catch(() => {});
+        }
         return r;
       })
       .catch(() => caches.match(e.request).then(r => r || caches.match(OFFLINE_URL)))
@@ -57,7 +60,14 @@ self.addEventListener('message', event => {
 self.addEventListener('notificationclick', event => {
   const action = event.action;
   event.notification.close();
-  if (action === 'stop') return;
+  if (action === 'stop') {
+    // Arrêter l'Adhan qui joue dans la page
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(list => list.forEach(c => c.postMessage({ type: 'STOP_ADHAN' })))
+    );
+    return;
+  }
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const client of list) {
