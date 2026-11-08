@@ -1,0 +1,68 @@
+name: Appli Android (APK)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'adhan-*.mp3'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Copier les Adhans dans l'appli
+        run: |
+          mkdir -p android/app/src/main/res/raw
+          cp adhan-makkah.mp3  android/app/src/main/res/raw/adhan_makkah.mp3
+          cp adhan-madinah.mp3 android/app/src/main/res/raw/adhan_madinah.mp3
+          cp adhan-egypt.mp3   android/app/src/main/res/raw/adhan_egypt.mp3
+          cp adhan-fajr.mp3    android/app/src/main/res/raw/adhan_fajr.mp3
+
+      - name: Construire l'APK
+        working-directory: android
+        run: |
+          set -o pipefail
+          gradle assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+
+      - name: Erreurs de construction
+        if: failure()
+        working-directory: android
+        run: |
+          grep -E "^e: |error:|What went wrong|Could not|Exception:|> " build.log | grep -v "^> Task" | head -40 | while IFS= read -r line; do
+            echo "::error::${line//%/%25}"
+          done
+
+      - name: Préparer l'APK
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk Salatuk-Adhan.apk
+          ls -la Salatuk-Adhan.apk
+          echo "::notice::APK OK version 1.0.${GITHUB_RUN_NUMBER}"
+
+      - name: Publier (Release)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Salatuk Adhan (Android)
+          make_latest: true
+          files: Salatuk-Adhan.apk
+          body: |
+            Application Android Salatuk avec alarmes Adhan (fonctionne écran éteint et appli fermée).
+            Télécharger : Salatuk-Adhan.apk ci-dessous, puis l'ouvrir pour l'installer.
+            Version 1.0.${{ github.run_number }}
