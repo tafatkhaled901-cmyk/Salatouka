@@ -618,7 +618,7 @@
   </div>
   <div class="ic-actions" id="icActions">
     <button class="ic-btn primary hidden" id="icInstallBtn" onclick="installPwa()">⬇ Installer maintenant</button>
-    <a class="ic-btn primary hidden" id="icApkBtn" href="./Salatuk.apk" download="Salatuk.apk" onclick="apkClicked()">🤖 Télécharger pour Android (APK)</a>
+    <a class="ic-btn primary hidden" id="icApkBtn" href="https://github.com/tafatkhaled901-cmyk/Salatouka/releases/latest/download/Salatuk-Adhan.apk" onclick="apkClicked()">🤖 Télécharger pour Android (APK)</a>
     <div class="ic-note hidden" id="icApkNote">Puis ouvrez le fichier et appuyez sur <b>Installer</b>.<br>Si Android le demande, autorisez « Installer des applications inconnues ».</div>
   </div>
   <div class="ic-ios hidden" id="icIos">
@@ -741,7 +741,7 @@
   <div class="countdown-timer" id="countdown">—:——</div>
 </div>
 
-<footer>صلاتك × MÉTÉO · بسم الله الرحمن الرحيم<br>Version 2026-11-03</footer>
+<footer>صلاتك × MÉTÉO · بسم الله الرحمن الرحيم<br>Version 2026-11-08</footer>
 
 <script>
 'use strict';
@@ -789,6 +789,18 @@ let adhanFired     = {};     // { 'Fajr-2026-09-27': true } — conservé dans l
 let loadedDateKey  = null;
 let weatherRefInt  = null;
 let tickInt        = null;
+
+// ── Appli Android native : alarmes du téléphone (window.SalatukNative) ──
+const NATIVE = (typeof window.SalatukNative !== 'undefined') ? window.SalatukNative : null;
+function nativeConfigure() {
+  if (!NATIVE || !currentCity) return;
+  try {
+    NATIVE.configure(JSON.stringify({
+      lat: currentCity.lat, lon: currentCity.lon, city: currentCity.name,
+      method: METHOD_MAP[selectedMethod] || 3, voice: selectedVoice, fajrSpecial,
+    }));
+  } catch (e) { console.warn('native configure', e); }
+}
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -896,14 +908,14 @@ document.querySelectorAll('[data-m]').forEach(c => {
 });
 document.querySelectorAll('[data-adhan]').forEach(c => {
   c.addEventListener('click', () => {
-    selectedVoice = c.dataset.adhan; syncChips(); saveState(); buildEvents(); updateLocMeta();
+    selectedVoice = c.dataset.adhan; syncChips(); saveState(); buildEvents(); updateLocMeta(); nativeConfigure();
     // aperçu de 4 secondes de la voix choisie
     previewAdhan(selectedVoice);
     if (audioUnlocked) rescheduleAll();
   });
 });
 document.getElementById('fajrToggle').addEventListener('click', () => {
-  fajrSpecial = !fajrSpecial; syncChips(); saveState(); buildEvents(); updateLocMeta();
+  fajrSpecial = !fajrSpecial; syncChips(); saveState(); buildEvents(); updateLocMeta(); nativeConfigure();
   if (audioUnlocked) rescheduleAll();
 });
 
@@ -1020,6 +1032,7 @@ async function loadPrayerTimes(opts = {}) {
   weatherRefInt = setInterval(() => fetchWeather(currentCity.lat, currentCity.lon, currentCity.name), 30 * 60 * 1000);
 
   saveState();
+  nativeConfigure();
   startTick();
   refreshAudioBanner();
   if (fromUser) requestNotifPermission();
@@ -1317,6 +1330,7 @@ function setSensorStatus(type, msg) {
 function firePrayer(ev, source) {
   if (adhanFired[ev.id]) return;
   markFired(ev.id);
+  if (NATIVE) { showPrayerScreen(ev); return; }   // le son est joué par l'alarme Android
   showPrayerScreen(ev);
   showPrayerNotification(ev);
   if (navigator.vibrate) navigator.vibrate([800,300,800,300,800,300,800]);
@@ -1552,6 +1566,7 @@ function updateBgBadge() {
 }
 
 async function toggleBackgroundMode() {
+  if (NATIVE) { NATIVE.openBatterySettings(); return; }
   if (backgroundMode) { bgWanted = false; stopBackgroundMode(); return; }
   await unlockAudio();
   const ok = await startBackgroundMode();
@@ -1713,6 +1728,7 @@ function scheduleMidnightRefresh() {
 
 let rescheduling = null;
 async function rescheduleAll() {
+  if (NATIVE) return 0;
   if (rescheduling) return rescheduling;
   rescheduling = scheduleAdhansInAudioEngine().finally(() => { rescheduling = null; });
   return rescheduling;
@@ -1721,6 +1737,7 @@ async function rescheduleAll() {
 // ── Déblocage du son (doit venir d'un vrai geste) ──
 let unlockPromise = null;
 function unlockAudio() {
+  if (NATIVE) { audioUnlocked = true; refreshAudioBanner(); return Promise.resolve(true); }
   if (audioUnlocked) return Promise.resolve(true);
   if (!unlockPromise) unlockPromise = doUnlockAudio().finally(() => { unlockPromise = null; });
   return unlockPromise;
@@ -1761,6 +1778,12 @@ async function resolveSource(type) {
 function refreshAudioBanner() {
   const warn = document.getElementById('audioWarn');
   const st   = document.getElementById('adhanStatusText');
+  if (NATIVE) {
+    if (warn) warn.classList.add('hidden');
+    const bt = document.getElementById('bgToggle'); if (bt) bt.style.display = 'none';
+    if (st) st.textContent = "✓ Alarmes Android actives · l'Adhan sonne même appli fermée";
+    return;
+  }
   if (warn) warn.classList.toggle('hidden', audioUnlocked);
   if (st && !audioUnlocked) st.textContent = 'Appuyez sur la bannière jaune pour activer le son';
 }
@@ -1828,6 +1851,7 @@ async function forcePlayAdhan() {
 }
 
 function dismissAdhan() {
+  if (NATIVE) { try { NATIVE.stop(); } catch (e) {} }
   document.getElementById('prayerScreen').classList.remove('visible');
   document.getElementById('adhanBanner').classList.remove('visible');
   if (adhanEl) { try { adhanEl.pause(); adhanEl.currentTime = 0; } catch (e) {} }
@@ -1838,6 +1862,7 @@ function dismissAdhan() {
 
 // ══ DIAGNOSTIC ══
 function runDiagnostic() {
+  if (NATIVE) return runNativeDiagnostic();
   const ctx = audioCtx;
   const L = [];
   const line = (ok, txt) => L.push(`<div class="dg-row ${ok === null ? 'warn' : (ok ? 'ok' : 'ko')}">${ok === null ? '⚠️' : (ok ? '✅' : '❌')} ${txt}</div>`);
@@ -1876,6 +1901,25 @@ function runDiagnostic() {
   if (nb) nb.style.display = (notif === 'granted') ? 'none' : 'block';
   document.getElementById('dgModal').classList.remove('hidden');
 }
+function runNativeDiagnostic() {
+  let st = {};
+  try { st = JSON.parse(NATIVE.status()); } catch (e) {}
+  const L = [];
+  const line = (ok, txt) => L.push(`<div class="dg-row ${ok === null ? 'warn' : (ok ? 'ok' : 'ko')}">${ok === null ? '⚠️' : (ok ? '✅' : '❌')} ${txt}</div>`);
+  line(true, `Appli Android Salatuk ${esc(st.version || '')}`);
+  line(!!st.exactAlarms, st.exactAlarms ? 'Alarmes à l\'heure exacte autorisées' : 'Alarmes exactes NON autorisées — <a href="#" onclick="NATIVE.openAlarmSettings();return false" style="color:#fbbf24">autoriser</a>');
+  line(!!st.notifications, st.notifications ? 'Notifications autorisées' : 'Notifications bloquées — <a href="#" onclick="NATIVE.openAppSettings();return false" style="color:#fbbf24">autoriser</a>');
+  line(st.battery ? true : null, st.battery ? 'Batterie : sans restriction' : 'Batterie optimisée — <a href="#" onclick="NATIVE.openBatterySettings();return false" style="color:#fbbf24">mettre « sans restriction »</a>');
+  line(st.daysAhead > 0, st.daysAhead > 0 ? `Horaires enregistrés pour ${st.daysAhead} jours (${esc(st.city || '')})` : 'Horaires pas encore téléchargés (connexion internet nécessaire)');
+  line(!!st.next, st.next ? `Prochaine alarme : ${esc(st.next)}` : 'Aucune alarme programmée');
+  const allOk = st.exactAlarms && st.notifications && st.daysAhead > 0 && st.next;
+  L.push(allOk
+    ? '<div class="dg-fix ok-fix">✅ Tout est correct. L\'Adhan sonnera même appli fermée, écran éteint ou après un redémarrage.</div>'
+    : '<div class="dg-fix">🔧 Corrigez les lignes ❌ ci-dessus en appuyant sur les liens.</div>');
+  document.getElementById('dgBody').innerHTML = L.join('');
+  const nb = document.getElementById('dgNotifBtn'); if (nb) nb.style.display = 'none';
+  document.getElementById('dgModal').classList.remove('hidden');
+}
 function closeDiag() { document.getElementById('dgModal').classList.add('hidden'); }
 
 function askNotif() {
@@ -1890,6 +1934,12 @@ function askNotif() {
 // Test : un Adhan dans 15 secondes pour vérifier l'écran éteint
 async function testBackgroundAdhan(kind, delaySec) {
   const delay = delaySec || 15;
+  if (NATIVE) {
+    NATIVE.test(kind === 'fajr' ? 'fajr' : selectedVoice, delay);
+    closeDiag();
+    alert("⏱️ Alarme de test programmée dans " + (delay >= 60 ? Math.round(delay / 60) + " minutes" : delay + " secondes") + ".\n\nVous pouvez éteindre l'écran ou même fermer l'application.");
+    return;
+  }
   await unlockAudio();
   const ctx = ensureCtx();
   if (!ctx) { alert('Moteur audio indisponible'); return; }
@@ -2009,6 +2059,7 @@ const isIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' 
 const isAndroid = /Android/i.test(UA);
 
 function isInstalled() {
+  if (NATIVE) return true;
   return (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches))
       || navigator.standalone === true
       || (document.referrer || '').startsWith('android-app://');   // application APK
@@ -2064,6 +2115,7 @@ restoreOrGeolocate();
 // ⏹ Arrêter l'Adhan : visible seulement pendant la lecture
 function isAdhanPlaying() {
   try {
+    if (typeof NATIVE !== 'undefined' && NATIVE && NATIVE.isPlaying()) return true;
     if (typeof adhanEl !== 'undefined' && adhanEl && !adhanEl.paused && !adhanEl.ended) return true;
     if (typeof audioCtx !== 'undefined' && audioCtx && typeof engineNodes !== 'undefined') {
       const t = audioCtx.currentTime;

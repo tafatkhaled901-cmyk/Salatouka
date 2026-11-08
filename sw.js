@@ -1,5 +1,5 @@
 // Service Worker — Salatuk × Météo v4
-const CACHE_NAME = 'salatuk-v6';
+const CACHE_NAME = 'salatuk-v7';
 const OFFLINE_URL = './index.html';
 
 const ASSETS = [
